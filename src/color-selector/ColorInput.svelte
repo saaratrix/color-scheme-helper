@@ -1,33 +1,27 @@
 <script lang="ts">
-  import { r, g, b } from './selected-colors.store';
-
-  setInterval(() => {
-    let value = $r + 1;
-    value = value % 255;
-    r.set(value);
-  }, 10);
+  import { red, green, blue, hue } from './selected-colors.store';
 </script>
 
 <div>
   <div class="input-group">
     <label>h: </label>
-    <input type="number" name="h">
+    <input name="h" value={$hue} type="number" step="1" min="0" max="359">
     <br>
     <label>s: </label>
-    <input type="number" name="s">
+    <input name="s" type="number">
     <br>
     <label>l: </label>
-    <input type="number" name="l">
+    <input name="l" type="number">
   </div>
   <div class="input-group">
     <label>r: </label>
-    <input value={$r} name="r" type="number" step="1" min="0" max="255">
+    <input name="r" value={$red} type="number" step="1" min="0" max="255">
     <br>
     <label>g: </label>
-    <input value={$g} name="g" type="number" step="1" min="0" max="255">
+    <input name="g" value={$green} type="number" step="1" min="0" max="255">
     <br>
     <label>b: </label>
-    <input value={$b} name="b" type="number" step="1" min="0" max="255">
+    <input name="b" value={$blue} type="number" step="1" min="0" max="255">
     <label>HEX: </label>
     <input name="hex" type="text" maxlength="9">
   </div>

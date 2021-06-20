@@ -14,6 +14,10 @@ export function drawRGBStrip(canvas: HTMLCanvasElement): void {
 
   context.fillStyle = gradient;
   context.fillRect(0, 0, width, height);
+  // Because gradient.addColorStop doesn't always add the final colour we manually add the last color
+  // So without this the final colour might be 255, 0, 3
+  context.fillStyle = 'rgb(255, 0, 0)';
+  context.fillRect(0, height - 1, width, 1);
 }
 
 // Modified source: https://codepen.io/pizza3/pen/BVzYNP

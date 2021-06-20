@@ -3,7 +3,7 @@
   import ColorInput from "./ColorInput.svelte";
   import { toRGBforCSS } from "../helpers/color-space-helpers";
 
-  import { r, g, b } from './selected-colors.store';
+  import { red, green, blue } from './selected-colors.store';
 
 </script>
 <style lang="scss">
@@ -18,7 +18,7 @@
 
 <section>
   <header class="color-selector-header">
-    <div class="selected-color" style="background-color: { toRGBforCSS($r, $g, $b) }"></div>
+    <div class="selected-color" style="background-color: { toRGBforCSS($red, $green, $blue) }"></div>
   </header>
   <main>
     <div class="color-picker-container">

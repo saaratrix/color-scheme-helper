@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { drawRGBStrip, drawHSVBlock } from './color-picker-helpers';
-  import { toRGBAforCSS } from '../helpers/color-space-helpers';
+  import { getHueFromRGB, toRGBAforCSS } from '../helpers/color-space-helpers';
 
-  import { r, g, b } from './selected-colors.store';
+  import { red, green, blue, hue } from './selected-colors.store';
   import type { Unsubscriber } from 'svelte/store';
+  import { clamp } from '../helpers/math-helpers';
 
   let slCanvas: HTMLCanvasElement;
   let slContext: CanvasRenderingContext2D | undefined;
@@ -20,20 +21,20 @@
     initEvents();
 
     slContext = slCanvas.getContext('2d');
-    rgbContext = slCanvas.getContext('2d');
+    rgbContext = rgbCanvas.getContext('2d');
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(toRGBAforCSS($r, $g, $b, 1), slCanvas);
+    drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
 
     subscriptions.push(
-      r.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($r, $g, $b, 1), slCanvas);
+      red.subscribe(value => {
+        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
       }),
-      g.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($r, $g, $b, 1), slCanvas);
+      green.subscribe(value => {
+        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
       }),
-      b.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($r, $g, $b, 1), slCanvas);
+      blue.subscribe(value => {
+        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
       }),
     );
   });
@@ -47,15 +48,33 @@
   });
 
   function initEvents(): void {
-    window.addEventListener('pointerleave', onWindowPointerLeave);
-    window.addEventListener('pointerup', onWindowPointerUp);
+    window.addEventListener('pointerleave', onPointerLeave);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointermove', onPointerMove);
 
     rgbCanvas.addEventListener('pointerdown', onRGBPointerDown);
-    rgbCanvas.addEventListener('pointermove', onRGBPointerMove);
   }
 
   function removeEvents(): void {
+    window.removeEventListener('pointerleave', onPointerLeave);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointermove', onPointerMove);
 
+    rgbCanvas.removeEventListener('pointerdown', onRGBPointerDown);
+  }
+
+  function onPointerMove(event: PointerEvent): void {
+    onRGBPointerMove(event);
+  }
+
+  function onPointerUp(): void {
+    slPointerDown = false;
+    rgbPointerDown = false;
+  }
+
+  function onPointerLeave(): void {
+    rgbPointerDown = false;
+    slPointerDown = false;
   }
 
   function onRGBPointerDown(): void {
@@ -67,18 +86,21 @@
       return;
     }
 
-    const imageData = rgbContext.getImageData(event.clientX, event.clientY, 1, 1);
-    console.log('pixel data!', imageData);
-  }
+    const bounds = rgbCanvas.getBoundingClientRect();
 
-  function onWindowPointerUp(): void {
-    rgbPointerDown = false;
-    slPointerDown = false;
-  }
+    const y = clamp(event.clientY - bounds.top, 0, rgbCanvas.height - 1);
+    const imageData = rgbContext.getImageData(0, y, 1, 1);
 
-  function onWindowPointerLeave(): void {
-    rgbPointerDown = false;
-    slPointerDown = false;
+    const r = imageData.data[0];
+    const g = imageData.data[1];
+    const b = imageData.data[2];
+
+    const h = getHueFromRGB(r, g, b);
+    hue.set(h);
+
+    red.set(r);
+    green.set(g);
+    blue.set(b);
   }
 </script>
 <style lang="scss">
@@ -96,6 +118,6 @@ canvas {
         <canvas bind:this={slCanvas} class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
-        <canvas bind:this={rgbCanvas} class="color-picker-rgb"></canvas>
+        <canvas bind:this={rgbCanvas} class="color-picker-rgb" width="20" height="256"></canvas>
     </div>
 </div>

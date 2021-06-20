@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 
-export const r = writable<number>(0);
-export const g = writable<number>(0);
-export const b = writable<number>(0);
+export const red = writable<number>(0);
+export const green = writable<number>(0);
+export const blue = writable<number>(0);
+export const hue = writable<number>(0);
