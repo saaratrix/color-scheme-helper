@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { red, green, blue, hue } from './selected-colors.store';
+  import { red, green, blue, hue, saturation, value } from './selected-colors.store';
 </script>
 
 <div>
   <div class="input-group">
     <label>h: </label>
-    <input name="h" value={$hue} type="number" step="1" min="0" max="359">
+    <input name="h" value={$hue} type="number" step="1" min="0" max="360">
     <br>
     <label>s: </label>
-    <input name="s" type="number">
+    <input name="s" value={Math.round($saturation * 100)} type="number" step="1" min="0" max="100">
     <br>
-    <label>l: </label>
-    <input name="l" type="number">
+    <label>v: </label>
+    <input name="v" value={Math.round($value * 100)} type="number" step="1" min="0" max="100">
   </div>
   <div class="input-group">
     <label>r: </label>

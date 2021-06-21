@@ -1,7 +1,7 @@
 <script lang="ts">
   import ColorPicker from "./ColorPicker.svelte";
   import ColorInput from "./ColorInput.svelte";
-  import { toRGBforCSS } from "../helpers/color-space-helpers";
+  import { toRGBForCSS } from "../helpers/color-space-helpers";
 
   import { red, green, blue } from './selected-colors.store';
 
@@ -18,7 +18,7 @@
 
 <section>
   <header class="color-selector-header">
-    <div class="selected-color" style="background-color: { toRGBforCSS($red, $green, $blue) }"></div>
+    <div class="selected-color" style="background-color: { toRGBForCSS($red, $green, $blue) }"></div>
   </header>
   <main>
     <div class="color-picker-container">

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { drawRGBStrip, drawHSVBlock } from './color-picker-helpers';
-  import { getHueFromRGB, toRGBAforCSS } from '../helpers/color-space-helpers';
+  import { hsvToRGB, hsvToRGBAForCSS } from '../helpers/color-space-helpers';
 
-  import { red, green, blue, hue } from './selected-colors.store';
+  import { red, green, blue, hue, saturation, value } from './selected-colors.store';
   import type { Unsubscriber } from 'svelte/store';
   import { clamp } from '../helpers/math-helpers';
 
-  let slCanvas: HTMLCanvasElement;
-  let slContext: CanvasRenderingContext2D | undefined;
+  let svCanvas: HTMLCanvasElement;
+  let svContext: CanvasRenderingContext2D | undefined;
   let rgbCanvas: HTMLCanvasElement;
   let rgbContext: CanvasRenderingContext2D | undefined;
 
-  let slPointerDown: boolean = false;
+  let svPointerDown: boolean = false;
   let rgbPointerDown: boolean = false;
 
   const subscriptions: Unsubscriber[] = [];
@@ -20,21 +20,15 @@
   onMount((): void => {
     initEvents();
 
-    slContext = slCanvas.getContext('2d');
+    svContext = svCanvas.getContext('2d');
     rgbContext = rgbCanvas.getContext('2d');
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
+    drawHSVBlock(hsvToRGBAForCSS($hue, 1, 1), svCanvas);
 
     subscriptions.push(
-      red.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
-      }),
-      green.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
-      }),
-      blue.subscribe(value => {
-        drawHSVBlock(toRGBAforCSS($red, $green, $blue, 1), slCanvas);
+      hue.subscribe(value => {
+        drawHSVBlock(hsvToRGBAForCSS($hue, 1, 1), svCanvas);
       }),
     );
   });
@@ -52,6 +46,7 @@
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointermove', onPointerMove);
 
+    svCanvas.addEventListener('pointerdown', onSVPointerDown);
     rgbCanvas.addEventListener('pointerdown', onRGBPointerDown);
   }
 
@@ -60,25 +55,52 @@
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointermove', onPointerMove);
 
+    svCanvas.removeEventListener('pointerdown', onSVPointerDown);
     rgbCanvas.removeEventListener('pointerdown', onRGBPointerDown);
   }
 
   function onPointerMove(event: PointerEvent): void {
+    onSLPointerMove(event);
     onRGBPointerMove(event);
   }
 
   function onPointerUp(): void {
-    slPointerDown = false;
+    svPointerDown = false;
     rgbPointerDown = false;
   }
 
   function onPointerLeave(): void {
     rgbPointerDown = false;
-    slPointerDown = false;
+    svPointerDown = false;
+  }
+
+  function onSVPointerDown(): void {
+    svPointerDown = true;
   }
 
   function onRGBPointerDown(): void {
     rgbPointerDown = true;
+  }
+
+  function onSLPointerMove(event: PointerEvent): void {
+    if (!svPointerDown) {
+      return;
+    }
+
+    const bounds = svCanvas.getBoundingClientRect();
+    const x = clamp(event.clientX - bounds.left, 0, svCanvas.width);
+    const y = clamp(event.clientY - bounds.top, 0, svCanvas.height);
+
+    const s = x / svCanvas.width;
+    const v = 1 - (y / svCanvas.height);
+
+    saturation.set(s);
+    value.set(v);
+
+    const rgb = hsvToRGB($hue, $saturation, $value);
+    red.set(rgb.red);
+    green.set(rgb.green);
+    blue.set(rgb.blue);
   }
 
   function onRGBPointerMove(event: PointerEvent): void {
@@ -87,20 +109,17 @@
     }
 
     const bounds = rgbCanvas.getBoundingClientRect();
-
-    const y = clamp(event.clientY - bounds.top, 0, rgbCanvas.height - 1);
-    const imageData = rgbContext.getImageData(0, y, 1, 1);
-
-    const r = imageData.data[0];
-    const g = imageData.data[1];
-    const b = imageData.data[2];
-
-    const h = getHueFromRGB(r, g, b);
+    // Get y-pos within the canvas.
+    const y = clamp(event.clientY - bounds.top, 0, rgbCanvas.height);
+    // Because the top is 360 degrees we want the top to be 360 degrees and bottom 0 degrees.
+    // So 360 - value!
+    const h = 360 - Math.round(((y / rgbCanvas.height) * 360));
     hue.set(h);
 
-    red.set(r);
-    green.set(g);
-    blue.set(b);
+    const rgb = hsvToRGB($hue, $saturation, $value);
+    red.set(rgb.red);
+    green.set(rgb.green);
+    blue.set(rgb.blue);
   }
 </script>
 <style lang="scss">
@@ -109,13 +128,10 @@
   position: relative;
 }
 
-canvas {
-  cursor: crosshair;
-}
 </style>
 <div class="color-picker">
     <div class="color-picker-saturation-lightness-container">
-        <canvas bind:this={slCanvas} class="color-picker-saturation-lightness"></canvas>
+        <canvas bind:this={svCanvas} class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
         <canvas bind:this={rgbCanvas} class="color-picker-rgb" width="20" height="256"></canvas>
