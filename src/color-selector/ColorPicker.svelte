@@ -4,13 +4,16 @@
   import { hsvToRGB, hsvToRGBAForCSS } from '../helpers/color-space-helpers';
 
   import { red, green, blue, hue, saturation, value } from './selected-colors.store';
+  import { isDragging } from '../global-states.store';
   import type { Unsubscriber } from 'svelte/store';
   import { clamp } from '../helpers/math-helpers';
 
   let svCanvas: HTMLCanvasElement;
   let svContext: CanvasRenderingContext2D | undefined;
+  let svIndicator: HTMLElement | undefined;
   let rgbCanvas: HTMLCanvasElement;
   let rgbContext: CanvasRenderingContext2D | undefined;
+  let rgbIndicator: HTMLElement | undefined;
 
   let svPointerDown: boolean = false;
   let rgbPointerDown: boolean = false;
@@ -27,8 +30,17 @@
     drawHSVBlock(hsvToRGBAForCSS($hue, 1, 1), svCanvas);
 
     subscriptions.push(
-      hue.subscribe(value => {
-        drawHSVBlock(hsvToRGBAForCSS($hue, 1, 1), svCanvas);
+      hue.subscribe(h => {
+        drawHSVBlock(hsvToRGBAForCSS(h, 1, 1), svCanvas);
+        // -3 is eyeballed to be center!
+        const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height) - 3;
+        rgbIndicator.style.transform = `translateY(${rgbIndicatorTop}px)`;
+      }),
+      saturation.subscribe(s => {
+        svIndicator.style.transform = getSVIndicatorTransform(s, $value);
+      }),
+      value.subscribe(v => {
+        svIndicator.style.transform = getSVIndicatorTransform($saturation, v);
       }),
     );
   });
@@ -65,21 +77,25 @@
   }
 
   function onPointerUp(): void {
+    if (svPointerDown) {
+      isDragging.removeDragging();
+    }
+    if (rgbPointerDown) {
+      isDragging.removeDragging();
+    }
+
     svPointerDown = false;
     rgbPointerDown = false;
   }
 
   function onPointerLeave(): void {
-    rgbPointerDown = false;
-    svPointerDown = false;
+    onPointerUp();
   }
 
-  function onSVPointerDown(): void {
+  function onSVPointerDown(event: PointerEvent): void {
     svPointerDown = true;
-  }
-
-  function onRGBPointerDown(): void {
-    rgbPointerDown = true;
+    onSLPointerMove(event);
+    isDragging.addDragging();
   }
 
   function onSLPointerMove(event: PointerEvent): void {
@@ -103,6 +119,12 @@
     blue.set(rgb.blue);
   }
 
+  function onRGBPointerDown(event: PointerEvent): void {
+    rgbPointerDown = true;
+    onRGBPointerMove(event);
+    isDragging.addDragging();
+  }
+
   function onRGBPointerMove(event: PointerEvent): void {
     if (!rgbPointerDown) {
       return;
@@ -121,19 +143,80 @@
     green.set(rgb.green);
     blue.set(rgb.blue);
   }
+
+  function getSVIndicatorTransform(saturation: number, value: number): string {
+    const x = (saturation * svCanvas.width) - svIndicator.offsetWidth * 0.5;
+    const y = ((1 - value) * svCanvas.height) - svIndicator.offsetHeight * 0.5;
+    const transform = `translate(${x}px, ${y}px)`;
+    return transform;
+  }
 </script>
 <style lang="scss">
-.color-picker-saturation-lightness-container,
+$circle-radius: 10px;
+$outer-color: rgba(0, 0, 0, 0.5);
+$inner-color: rgba(255, 255, 255, 0.8);
+
+
+.color-picker-sv-container,
 .color-picker-rgb-container {
   position: relative;
 }
 
+.color-picker-rgb-container {
+  padding-left: 10px;
+}
+
+.color-picker-arrow-indicator,
+.color-picker-inner-arrow,
+.color-picker-circle-indicator,
+.color-picker-inner-circle {
+  position: absolute;
+}
+
+.color-picker-arrow-indicator {
+  left: 3px;
+  //width: 5px;
+  width: 0;
+  height: 0;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+
+  border-left: 7px solid black;
+}
+
+.color-picker-inner-arrow {
+  width: 0;
+  height: 0;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  border-left: 5px solid white;
+  // -7px is too much, -6px is ok but -6.5px seems to do best!
+  left: -6.5px;
+  top: -2px;
+}
+
+.color-picker-circle-indicator {
+  width: $circle-radius;
+  height: $circle-radius;
+  border: 1px solid $outer-color;
+  border-radius: $circle-radius;
+}
+
+.color-picker-inner-circle {
+  width: 100%;
+  height: 100%;
+  border: 1px solid $inner-color;
+  border-radius: $circle-radius;
+}
+
 </style>
 <div class="color-picker">
-    <div class="color-picker-saturation-lightness-container">
-        <canvas bind:this={svCanvas} class="color-picker-saturation-lightness"></canvas>
+    <div class="color-picker-sv-container">
+      <div bind:this={svIndicator} class="color-picker-circle-indicator"><div class="color-picker-inner-circle"></div></div>
+      <canvas bind:this={svCanvas} width="256" height="256" class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
-        <canvas bind:this={rgbCanvas} class="color-picker-rgb" width="20" height="256"></canvas>
+      <div bind:this={rgbIndicator} class="color-picker-arrow-indicator"><div class="color-picker-inner-arrow"></div></div>
+      <canvas bind:this={rgbCanvas} class="color-picker-rgb" width="20" height="256"></canvas>
     </div>
 </div>
