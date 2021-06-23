@@ -18,6 +18,9 @@
   let svPointerDown: boolean = false;
   let rgbPointerDown: boolean = false;
 
+  // -3 is eyeballed to be center!
+  const hueIndicatorTopOffset: number = -3;
+
   const subscriptions: Unsubscriber[] = [];
 
   onMount((): void => {
@@ -32,8 +35,7 @@
     subscriptions.push(
       hue.subscribe(h => {
         drawHSVBlock(hsvToRGBAForCSS(h, 1, 1), svCanvas);
-        // -3 is eyeballed to be center!
-        const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height) - 3;
+        const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height) + hueIndicatorTopOffset;
         rgbIndicator.style.transform = `translateY(${rgbIndicatorTop}px)`;
       }),
       saturation.subscribe(s => {
@@ -153,9 +155,18 @@
 </script>
 <style lang="scss">
 $circle-radius: 10px;
-$outer-color: rgba(0, 0, 0, 0.5);
+$outer-color: rgba(0, 0, 0, 0.33);
 $inner-color: rgba(255, 255, 255, 0.8);
 
+$rgb-padding-left: 15px;
+$arrow-indicator-size: 7px;
+$arrow-indicator-position-left: $rgb-padding-left - $arrow-indicator-size;
+$arrow-indicator-outer-bg: #0d0d0d;
+$arrow-indicator-inner-bg: seashell;
+
+.color-picker {
+  display: flex;
+}
 
 .color-picker-sv-container,
 .color-picker-rgb-container {
@@ -163,7 +174,7 @@ $inner-color: rgba(255, 255, 255, 0.8);
 }
 
 .color-picker-rgb-container {
-  padding-left: 10px;
+  padding-left: $rgb-padding-left;
 }
 
 .color-picker-arrow-indicator,
@@ -174,14 +185,12 @@ $inner-color: rgba(255, 255, 255, 0.8);
 }
 
 .color-picker-arrow-indicator {
-  left: 3px;
-  //width: 5px;
+  left: $arrow-indicator-position-left;
   width: 0;
   height: 0;
   border-top: 3px solid transparent;
   border-bottom: 3px solid transparent;
-
-  border-left: 7px solid black;
+  border-left: $arrow-indicator-size solid $arrow-indicator-outer-bg;
 }
 
 .color-picker-inner-arrow {
@@ -189,7 +198,7 @@ $inner-color: rgba(255, 255, 255, 0.8);
   height: 0;
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
-  border-left: 5px solid white;
+  border-left: 5px solid $arrow-indicator-inner-bg;
   // -7px is too much, -6px is ok but -6.5px seems to do best!
   left: -6.5px;
   top: -2px;

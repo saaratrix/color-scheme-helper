@@ -14,20 +14,24 @@
     width: $size-selected-color;
     height: $size-selected-color;
   }
+
+  .color-selector {
+    display: inline-flex;
+    padding: 0.5rem;
+    border: 1px solid black;
+    box-shadow: 5px 5px 25px 5px rgba(0,0,0,0.2);
+  }
 </style>
 
-<section>
-  <header class="color-selector-header">
-    <div class="selected-color" style="background-color: { toRGBForCSS($red, $green, $blue) }"></div>
-  </header>
-  <main>
-    <div class="color-picker-container">
-      <ColorPicker />
+<div class="color-selector">
+  <div class="color-picker-container">
+    <ColorPicker />
+  </div>
+  <div class="color-input-container">
+    <ColorInput />
+    <div class="color-selector-header">
+      <div class="selected-color" style="background-color: { toRGBForCSS($red, $green, $blue) }"></div>
     </div>
-    <div class="color-input-container">
-      <ColorInput />
-    </div>
-  </main>
-
-</section>
+  </div>
+</div>
 
