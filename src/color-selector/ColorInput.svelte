@@ -1,11 +1,20 @@
 <script lang="ts">
   import { red, green, blue, hue, saturation, value } from './selected-colors.store';
+  import { clamp } from '../helpers/math-helpers';
+
+  function onHueChange(event: InputEvent): void {
+    const target = event.target as HTMLInputElement;
+    const h =  Math.round(parseFloat(target.value));
+    target.value = h.toString();
+
+    const clampedH = clamp(h, 0, 360);
+    hue.set(clampedH);
+  }
 </script>
 <style lang="scss">
-  .color-input-container {
+  .color-input-selected-container {
     display: grid;
-    grid-gap: 0.5rem;
-    padding: 0.2857rem;
+    grid-gap: 0.4rem;
   }
 
   .color-group {
@@ -21,7 +30,7 @@
 
   input {
     width: 5.5rem;
-    padding: 0.25rem;
+    padding: 0.125rem;
     text-align: right;
   }
 
@@ -38,11 +47,11 @@
   }
 </style>
 
-<div class="color-input-container">
+<div class="color-input-selected-container">
   <div class="color-group">
     <div class="input-group">
       <label>H: </label>
-      <input name="h" value={$hue} type="number" step="1" min="0" max="360">
+      <input name="h" value={$hue} on:input={onHueChange} type="number" step="1" min="0" max="360">
     </div>
     <div class="input-group">
       <label>S: </label>

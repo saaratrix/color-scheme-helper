@@ -59,18 +59,12 @@
     window.addEventListener('pointerleave', onPointerLeave);
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointermove', onPointerMove);
-
-    svCanvas.addEventListener('pointerdown', onSVPointerDown);
-    rgbCanvas.addEventListener('pointerdown', onRGBPointerDown);
   }
 
   function removeEvents(): void {
     window.removeEventListener('pointerleave', onPointerLeave);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointermove', onPointerMove);
-
-    svCanvas.removeEventListener('pointerdown', onSVPointerDown);
-    rgbCanvas.removeEventListener('pointerdown', onRGBPointerDown);
   }
 
   function onPointerMove(event: PointerEvent): void {
@@ -171,6 +165,7 @@ $arrow-indicator-inner-bg: seashell;
 .color-picker-sv-container,
 .color-picker-rgb-container {
   position: relative;
+  display: flex;
 }
 
 .color-picker-rgb-container {
@@ -222,10 +217,10 @@ $arrow-indicator-inner-bg: seashell;
 <div class="color-picker">
     <div class="color-picker-sv-container">
       <div bind:this={svIndicator} class="color-picker-circle-indicator"><div class="color-picker-inner-circle"></div></div>
-      <canvas bind:this={svCanvas} width="256" height="256" class="color-picker-saturation-lightness"></canvas>
+      <canvas bind:this={svCanvas} on:pointerdown={onSVPointerDown} width="256" height="256" class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
       <div bind:this={rgbIndicator} class="color-picker-arrow-indicator"><div class="color-picker-inner-arrow"></div></div>
-      <canvas bind:this={rgbCanvas} class="color-picker-rgb" width="20" height="256"></canvas>
+      <canvas bind:this={rgbCanvas} on:pointerdown={onRGBPointerDown} class="color-picker-rgb" width="20" height="256"></canvas>
     </div>
 </div>
