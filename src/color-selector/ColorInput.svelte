@@ -4,7 +4,7 @@
   import type { ColorRGB } from '../models/color-rgb';
   import { onDestroy, onMount } from 'svelte';
   import type { Unsubscriber } from 'svelte/store';
-  import { hsvToRGB, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
+  import { hexToRGB, hsvToRGB, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
 
   let rgb: ColorRGB = { red: 0, green: 0, blue: 0 };
   let hex: string = "";
@@ -75,7 +75,15 @@
   }
 
   function onHexChange(event: InputEvent): void {
+    const element = event.target as HTMLInputElement;
+    const hex = element.value;
+    const rgba = hexToRGB(hex);
 
+    rgb.red = rgba.red;
+    rgb.green = rgba.green;
+    rgb.blue = rgba.blue;
+
+    updateHSV();
   }
 
   function updateHSV(): void {

@@ -1,6 +1,7 @@
 import type { ColorRGB } from '../models/color-rgb';
 import type { ColorHSL } from '../models/color-hsl';
 import type { ColorHSV } from '../models/color-hsv';
+import type { ColorRGBA } from '../models/color-rgba';
 
 export function rgbToCSS(r: number, g: number, b: number): string {
   return `rgb(${r}, ${g}, ${b})`;
@@ -34,15 +35,20 @@ export function hsvToCSS(hue: number, saturation: number, value: number): string
  * @param green Range: [0, 255]
  */
 export function rgbToHex(red: number, blue: number, green: number): string {
-  let hexRed = red.toString(16);
-  let hexGreen = green.toString(16);
-  let hexBlue = blue.toString(16);
+  let hexRed = componentToHex(red);
+  let hexGreen = componentToHex(green);
+  let hexBlue = componentToHex(blue);
 
-  if (hexRed === '0') { hexRed = '00'; }
-  if (hexGreen === '0') { hexGreen = '00'; }
-  if (hexBlue === '0') { hexBlue = '00'; }
+  if (hexRed.length === 1) { hexRed = '0' + hexRed; }
+  if (hexGreen.length === 1) { hexGreen = '0' + hexGreen; }
+  if (hexBlue.length === 1) { hexBlue = '0' + hexBlue; }
 
   return `#${hexRed}${hexGreen}${hexBlue}`;
+}
+
+export function componentToHex(color: number): string {
+  let hex = color.toString(16);
+  return hex.length === 1 ? '0' + hex : hex;
 }
 
 // Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#From_RGB
@@ -66,18 +72,21 @@ export function rgbToHSV(red: number, green: number, blue: number): ColorHSV {
   }
 
   let hue: number = 0;
-  switch (value) {
-    case 0:
-      break;
-    case r:
-      hue = 60 * (((g - b) / chroma));
-      break;
-    case g:
-      hue = 60 * (2 + ((b -r ) / chroma));
-      break;
-    case b:
-      hue = 60 * (4 + ((r - g) / chroma))
-      break;
+
+  if (chroma !== 0) {
+    switch (value) {
+      case 0:
+        break;
+      case r:
+        hue = 60 * (((g - b) / chroma));
+        break;
+      case g:
+        hue = 60 * (2 + ((b -r) / chroma));
+        break;
+      case b:
+        hue = 60 * (4 + ((r - g) / chroma))
+        break;
+    }
   }
 
   hue = Math.round(hue);
@@ -178,4 +187,49 @@ export function getViewHSL(hue: number, saturation: number, lightness: number): 
     saturation: Math.round(saturation * 100),
     lightness: Math.round(lightness * 100),
   };
+}
+
+// Regex source: https://stackoverflow.com/a/53936623/2437350
+/**
+ * Finds hex values for for #fff, #ffff, #ffffff, #ffffffff and without #.
+ */
+export const getHexValuesRegex = /^#?([a-fA-F0-9]{3,4}){1,2}$/;
+
+export function hexToRGB(hex: string): ColorRGBA {
+  const rgba: ColorRGBA = {
+    red: 0,
+    green: 0,
+    blue: 0,
+    alpha: 255,
+  };
+
+  if (!getHexValuesRegex.test(hex)) {
+    return rgba;
+  }
+
+  if (hex[0] === '#') {
+    hex = hex.substring(1);
+  }
+
+  if (hex.length === 3) {
+    extractHex(hex, rgba, 0, 0, 1, 1, 2, 2);
+  } else if (hex.length === 6) {
+    extractHex(hex, rgba, 0, 1, 2, 3, 4, 5);
+  } else if (hex.length === 4) {
+    extractHex(hex, rgba, 0, 0, 1, 1, 2, 2, 3, 3);
+  } else if (hex.length === 8) {
+    extractHex(hex, rgba, 0, 1, 2, 3, 4, 5, 6, 7);
+  }
+
+  return rgba;
+}
+
+function extractHex(hex: string, rgba: ColorRGBA, r1, r2, g1, g2, b1, b2, a1 = -1, a2 = -1): void {
+  rgba.red = parseInt(hex[r1] + hex[r2], 16);
+  rgba.green = parseInt(hex[g1] + hex[g2], 16);
+  rgba.blue = parseInt(hex[b1] + hex[b2], 16);
+
+  if (a1 > 0) {
+    rgba.alpha = parseInt(hex[a1] + hex[a2], 16);
+  }
 }

@@ -13,7 +13,8 @@
   .color-selector {
     display: inline-flex;
     padding: 0.5rem;
-    border: 1px solid black;
+    border: 1px solid #bbb;
+    border-radius: 4px;
     box-shadow: 5px 5px 25px 5px rgba(0,0,0,0.2);
   }
 
