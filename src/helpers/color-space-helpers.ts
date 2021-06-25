@@ -34,7 +34,7 @@ export function hsvToCSS(hue: number, saturation: number, value: number): string
  * @param blue Range: [0, 255]
  * @param green Range: [0, 255]
  */
-export function rgbToHex(red: number, blue: number, green: number): string {
+export function rgbToHex(red: number, green: number, blue: number): string {
   let hexRed = componentToHex(red);
   let hexGreen = componentToHex(green);
   let hexBlue = componentToHex(blue);
