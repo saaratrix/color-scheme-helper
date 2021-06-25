@@ -6,6 +6,8 @@
   import type { Unsubscriber } from 'svelte/store';
   import { hexToRGB, hsvToRGB, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
 
+  // If we update RGB colors or hex directly we don't want to HSV events to update the RGB values because it makes it impossible to edit values!
+  let blockRGBHexUpdate: boolean = false;
   let rgb: ColorRGB = { red: 0, green: 0, blue: 0 };
   let hex: string = "";
   const subscriptions: Unsubscriber[] = [];
@@ -89,12 +91,20 @@
   function updateHSV(): void {
     const hsv = rgbToHSV(rgb.red, rgb.green, rgb.blue);
 
+    blockRGBHexUpdate = true;
+
     hue.set(hsv.hue);
     saturation.set(hsv.saturation);
     value.set(hsv.value);
+
+    blockRGBHexUpdate = false;
   }
 
   function updateRGBAndHex(h: number, s: number, v: number): void {
+    if (blockRGBHexUpdate) {
+      return;
+    }
+
     const color = hsvToRGB(h, s, v);
     rgb.red = color.red;
     rgb.green = color.green;
@@ -136,7 +146,7 @@
   }
 
   input {
-    width: 5.5rem;
+    width: 5.25rem;
     padding: 0.125rem;
     text-align: right;
   }
