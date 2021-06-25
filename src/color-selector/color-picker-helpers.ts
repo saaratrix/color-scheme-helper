@@ -3,6 +3,7 @@ export function drawRGBStrip(canvas: HTMLCanvasElement): void {
   const context = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
+  // This gradient makes hue go from 360° -> 0°
   const gradient = context.createLinearGradient(0, 0, 0, height);
   gradient.addColorStop(0, 'rgba(255, 0, 0, 1)');
   gradient.addColorStop(1 / 6, 'rgba(255, 0, 255, 1)');

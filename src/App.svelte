@@ -3,7 +3,6 @@
   import { isDragging } from './global-states.store';
 
   isDragging.subscribe((value) => {
-    console.log('value changed!');
     if (value) {
       document.body.classList.add('user-select-none');
     } else {

@@ -1,9 +1,9 @@
 <script lang="ts">
   import ColorPicker from "./ColorPicker.svelte";
   import ColorInput from "./ColorInput.svelte";
-  import { toRGBForCSS } from "../helpers/color-space-helpers";
+  import { rgbToCSS, hsvToCSS } from "../helpers/color-space-helpers";
 
-  import { red, green, blue } from './selected-colors.store';
+  import { hue, saturation, value } from './selected-colors.store';
 
 </script>
 <style lang="scss">
@@ -44,8 +44,8 @@
   <div class="color-input-selected-container">
     <ColorInput />
     <div class="selected-color-container">
-      <div class="selected-color selected-color-new" style="background-color: { toRGBForCSS($red, $green, $blue) }"></div>
-      <div class="selected-color selected-color-old" style="background-color: { toRGBForCSS(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255)) }"></div>
+      <div class="selected-color selected-color-new" style="background-color: { hsvToCSS($hue, $saturation, $value) }"></div>
+      <div class="selected-color selected-color-old" style="background-color: { rgbToCSS(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255)) }"></div>
     </div>
   </div>
 </div>

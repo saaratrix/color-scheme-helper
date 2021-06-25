@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { drawRGBStrip, drawHSVBlock } from './color-picker-helpers';
-  import { hsvToRGB, hsvToRGBAForCSS } from '../helpers/color-space-helpers';
+  import { hsvToRGBAToCSS } from '../helpers/color-space-helpers';
 
-  import { red, green, blue, hue, saturation, value } from './selected-colors.store';
+  import { hue, saturation, value } from './selected-colors.store';
   import { isDragging } from '../global-states.store';
   import type { Unsubscriber } from 'svelte/store';
   import { clamp } from '../helpers/math-helpers';
@@ -30,11 +30,11 @@
     rgbContext = rgbCanvas.getContext('2d');
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(hsvToRGBAForCSS($hue, 1, 1), svCanvas);
+    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1), svCanvas);
 
     subscriptions.push(
       hue.subscribe(h => {
-        drawHSVBlock(hsvToRGBAForCSS(h, 1, 1), svCanvas);
+        drawHSVBlock(hsvToRGBAToCSS(h, 1, 1), svCanvas);
         const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height) + hueIndicatorTopOffset;
         rgbIndicator.style.transform = `translateY(${rgbIndicatorTop}px)`;
       }),
@@ -108,11 +108,6 @@
 
     saturation.set(s);
     value.set(v);
-
-    const rgb = hsvToRGB($hue, $saturation, $value);
-    red.set(rgb.red);
-    green.set(rgb.green);
-    blue.set(rgb.blue);
   }
 
   function onRGBPointerDown(event: PointerEvent): void {
@@ -133,11 +128,6 @@
     // So 360 - value!
     const h = 360 - Math.round(((y / rgbCanvas.height) * 360));
     hue.set(h);
-
-    const rgb = hsvToRGB($hue, $saturation, $value);
-    red.set(rgb.red);
-    green.set(rgb.green);
-    blue.set(rgb.blue);
   }
 
   function getSVIndicatorTransform(saturation: number, value: number): string {

@@ -1,51 +1,94 @@
 import type { ColorRGB } from '../models/color-rgb';
+import type { ColorHSL } from '../models/color-hsl';
+import type { ColorHSV } from '../models/color-hsv';
 
-export function toRGBForCSS(r: number, g: number, b: number): string {
+export function rgbToCSS(r: number, g: number, b: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export function toRGBAForCSS(r: number, g: number, b: number, a: number): string {
+export function rgbaToCSS(r: number, g: number, b: number, a: number): string {
   return `rgb(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function hsvToRGBAForCSS(hue: number, saturation: number, value: number): string {
+export function hsvToRGBAToCSS(hue: number, saturation: number, value: number): string {
   const rgb = hsvToRGB(hue, saturation, value);
-  return toRGBAForCSS(rgb.red, rgb.green, rgb.blue, 1);
+  return rgbaToCSS(rgb.red, rgb.green, rgb.blue, 1);
 }
 
-// Modified source: https://stackoverflow.com/q/39118528/2437350
-// Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma
-export function getHueFromRGB(r: number, g: number, b: number): number {
-  // Convert colours into 0 -> 1 range.
-  r = r / 255;
-  g = g / 255;
-  b = b / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-
-  if (min === max) {
-    return 0;
-  }
-
-  const chroma = max - min;
-  let hue: number;
-  if (chroma === r) {
-    hue = ((g - b) / chroma) % 6;
-  } else if (chroma === g) {
-    hue = ((b - r) / chroma) + 2
-  // chroma === b
-  } else {
-    hue = ((r - g) / chroma) + 4;
-  }
-
-  hue *= 60;
-  if (hue < 0) {
-    hue += 360;
-  }
-  // ceil rounding makes us hit 360 degrees at rgb(255, 0, 3) which is top colour of the gradient.
-  return Math.ceil(hue);
+/**
+ * Converts HSV to HSL and then to CSS.
+ * @param hue Range: [0°, 360°]
+ * @param saturation Range: [0, 1]
+ * @param value Range: [0, 1]
+ */
+export function hsvToCSS(hue: number, saturation: number, value: number): string {
+  let hsl = hsvToHSL(hue, saturation, value);
+  hsl = getViewHSL(hsl.hue, hsl.saturation, hsl.lightness);
+  return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%`;
 }
+
+/**
+ * Convert RGB to Hex
+ * @param red Range: [0, 255]
+ * @param blue Range: [0, 255]
+ * @param green Range: [0, 255]
+ */
+export function rgbToHex(red: number, blue: number, green: number): string {
+  let hexRed = red.toString(16);
+  let hexGreen = green.toString(16);
+  let hexBlue = blue.toString(16);
+
+  if (hexRed === '0') { hexRed = '00'; }
+  if (hexGreen === '0') { hexGreen = '00'; }
+  if (hexBlue === '0') { hexBlue = '00'; }
+
+  return `#${hexRed}${hexGreen}${hexBlue}`;
+}
+
+// Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#From_RGB
+/**
+ * Convert RGB to HSV
+ * @param red Range: [0, 255]
+ * @param blue Range: [0, 255]
+ * @param green Range: [0, 255]
+ */
+export function rgbToHSV(red: number, green: number, blue: number): ColorHSV {
+  const r = red / 255;
+  const g = green / 255;
+  const b = blue / 255;
+
+  const value = Math.max(r, g, b);
+  const xMin = Math.min(r, g, b);
+  const chroma = value - xMin;
+  let saturation = 0;
+  if (value !== 0) {
+    saturation = chroma / value;
+  }
+
+  let hue: number = 0;
+  switch (value) {
+    case 0:
+      break;
+    case r:
+      hue = 60 * (((g - b) / chroma));
+      break;
+    case g:
+      hue = 60 * (2 + ((b -r ) / chroma));
+      break;
+    case b:
+      hue = 60 * (4 + ((r - g) / chroma))
+      break;
+  }
+
+  hue = Math.round(hue);
+
+  return {
+    hue,
+    saturation,
+    value,
+  };
+}
+
 
 // Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB
 /**
@@ -97,5 +140,42 @@ export function hsvToRGB(hue: number, saturation: number, value: number): ColorR
     red,
     green,
     blue,
+  };
+}
+
+// Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_HSL
+/**
+ * Rounds and multiplies saturation & lightness by 100.
+ * @param hue Range: [0°, 360°]
+ * @param saturation Range: [0, 1]
+ * @param value Range: [0, 1]
+ */
+export function hsvToHSL(hue: number, saturation: number, value: number): ColorHSL {
+  const l = value * (1 - saturation / 2);
+  // sv = 0 if value == 0
+  let sv = 0;
+  if (value !== 0) {
+    sv = (value - l) / Math.min(l, 1 - l);
+  }
+
+  return {
+    // Hl = Hv
+    hue,
+    saturation: sv,
+    lightness: l,
+  };
+}
+
+/**
+ * Rounds and multiplies saturation & lightness by 100.
+ * @param hue Range: [0°, 360°]
+ * @param saturation Range: [0, 1]
+ * @param lightness Range: [0, 1]
+ */
+export function getViewHSL(hue: number, saturation: number, lightness: number): ColorHSL {
+  return {
+    hue,
+    saturation: Math.round(saturation * 100),
+    lightness: Math.round(lightness * 100),
   };
 }
