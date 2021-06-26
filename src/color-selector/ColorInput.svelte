@@ -129,7 +129,7 @@
 
 </script>
 <style lang="scss">
-  .color-input-selected-container {
+  .color-input-container {
     display: grid;
     grid-gap: 0.4rem;
   }
@@ -164,7 +164,7 @@
   }
 </style>
 
-<div class="color-input-selected-container">
+<div class="color-input-container">
   <div class="color-group">
     <div class="input-group">
       <label for="nuu_hsv_hue">H: </label>
