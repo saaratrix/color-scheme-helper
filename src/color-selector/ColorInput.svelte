@@ -56,6 +56,7 @@
     let red = getAndSetRoundedInputValue(event);
     red = clampInput(red, 0, 255);
     rgb.red = red;
+    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
 
     updateHSV();
   }
@@ -64,6 +65,7 @@
     let green = getAndSetRoundedInputValue(event);
     green = clampInput(green, 0, 255);
     rgb.green = green;
+    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
 
     updateHSV();
   }
@@ -72,6 +74,7 @@
     let blue = getAndSetRoundedInputValue(event);
     blue = clampInput(blue, 0, 255);
     rgb.blue = blue;
+    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
 
     updateHSV();
   }
@@ -89,9 +92,16 @@
   }
 
   function updateHSV(): void {
+    const oldHue = $hue;
     const hsv = rgbToHSV(rgb.red, rgb.green, rgb.blue);
 
     blockRGBHexUpdate = true;
+
+    // This is so that we don't jump with the hue if you are adjusting the RGB values and they all align
+    // Which makes it become a greyscale value and thus hue is calculated as 0.
+    if (rgb.red === rgb.green && rgb.red === rgb.blue && oldHue !== 0) {
+      hsv.hue = oldHue;
+    }
 
     hue.set(hsv.hue);
     saturation.set(hsv.saturation);

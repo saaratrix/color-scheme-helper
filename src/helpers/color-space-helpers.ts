@@ -52,6 +52,7 @@ export function componentToHex(color: number): string {
 }
 
 // Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#From_RGB
+// Formula for hue: // Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma
 /**
  * Convert RGB to HSV
  * @param red Range: [0, 255]
@@ -78,17 +79,21 @@ export function rgbToHSV(red: number, green: number, blue: number): ColorHSV {
       case 0:
         break;
       case r:
-        hue = 60 * (((g - b) / chroma));
+        hue = ((g - b) / chroma) % 6;
         break;
       case g:
-        hue = 60 * (2 + ((b -r) / chroma));
+        hue = ((b - r) / chroma) + 2
         break;
       case b:
-        hue = 60 * (4 + ((r - g) / chroma))
+        hue = ((r - g) / chroma) + 4;
         break;
     }
   }
 
+  hue *= 60;
+  if (hue < 0) {
+    hue += 360;
+  }
   hue = Math.round(hue);
 
   return {
