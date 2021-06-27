@@ -11,9 +11,9 @@ export function rgbaToCSS(r: number, g: number, b: number, a: number): string {
   return `rgb(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function hsvToRGBAToCSS(hue: number, saturation: number, value: number): string {
+export function hsvToRGBAToCSS(hue: number, saturation: number, value: number, alpha: number): string {
   const rgb = hsvToRGB(hue, saturation, value);
-  return rgbaToCSS(rgb.red, rgb.green, rgb.blue, 1);
+  return rgbaToCSS(rgb.red, rgb.green, rgb.blue, alpha);
 }
 
 /**

@@ -15,8 +15,6 @@
   let rgbContext: CanvasRenderingContext2D | undefined;
   // Indicator to transform up & down based on color!
   let rgbPointyIndicator: HTMLElement | undefined;
-  // SVG Path to get the fill
-  let rgbPointyPath: SVGPathElement | undefined;
 
   let svPointerDown: boolean = false;
   let rgbPointerDown: boolean = false;
@@ -30,15 +28,15 @@
     rgbContext = rgbCanvas.getContext('2d');
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1), svCanvas);
+    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas);
 
     subscriptions.push(
       hue.subscribe(h => {
-        const rgba = hsvToRGBAToCSS(h, 1, 1);
+        const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
         drawHSVBlock(rgba, svCanvas);
         const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height);
-        rgbPointyIndicator.style.transform = `translateY(${rgbIndicatorTop}px)`;
-        rgbPointyPath.style.fill = rgba;
+        rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`;
+        rgbPointyIndicator.style.backgroundColor = rgba;
       }),
       saturation.subscribe(s => {
         svIndicator.style.transform = getSVIndicatorTransform(s, $value);
@@ -144,7 +142,7 @@ $circle-radius: 10px;
 $outer-color: rgba(0, 0, 0, 0.67);
 $inner-color: rgba(255, 255, 255, 0.8);
 
-$rgb-padding-left: 15px;
+$rgb-margin-left: 8px;
 $rgb-indicator-outer-bg: #0d0d0d;
 $rgb-indicator-inner-bg: seashell;
 
@@ -159,13 +157,21 @@ $rgb-indicator-inner-bg: seashell;
 }
 
 .color-picker-rgb-container {
-  padding-left: $rgb-padding-left;
+  margin-left: $rgb-margin-left;
 }
 
 .color-picker-circle-indicator,
 .color-picker-inner-circle,
-.color-picker-rgb-slider {
+.color-picker-rgb-slider,
+.color-picker-rgb-slider-inner {
   position: absolute;
+  // We only listen to the
+  pointer-events: none;
+}
+
+.color-picker-saturation-lightness,
+.color-picker-rgb {
+  cursor: pointer;
 }
 
 .color-picker-circle-indicator {
@@ -183,15 +189,23 @@ $rgb-indicator-inner-bg: seashell;
 }
 
 .color-picker-rgb-slider {
-  width: 28px;
-  height: 28px;
+  width: 25px;
+  height: 25px;
+
   // Set the top negative to half height so the transform that will be applied can just be the position!
-  top: -14px;
-  left: 11px;
+  top: -12.5px;
+  left: -2.5px;
 
   pointer-events: none;
-  stroke: rgba(255, 255, 255, 0.8);
-  stroke-width: 0.6;
+  border: 2px solid $outer-color;
+  border-radius: 12.5px;
+}
+
+.color-picker-rgb-slider-inner {
+  width: 100%;
+  height: 100%;
+  border: 1px solid $inner-color;
+  border-radius: 12.5px;
 }
 
 </style>
@@ -201,35 +215,7 @@ $rgb-indicator-inner-bg: seashell;
       <canvas bind:this={svCanvas} on:pointerdown={onSVPointerDown} width="256" height="256" class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
-      <div bind:this={rgbPointyIndicator} class="color-picker-rgb-slider">
-        <!-- svg source: https://stackoverflow.com/a/45455766 -->
-        <svg viewBox="0 0 10 10">
-          <defs>
-            <!-- source: https://stackoverflow.com/a/42449363 -->
-            <filter id='inset' x='-50%' y='-50%' width='200%' height='200%'>
-              <!--outside-stroke-->
-              <feFlood flood-color="black" result="outside-color"/>
-              <!-- we hide the "outer" border because it's anti-aliased. -->
-              <!-- then we render the inside stroke with the stroke attribute. -->
-              <feMorphology in="SourceAlpha" operator="dilate" radius="0"/>
-              <feComposite in="outside-color" operator="in" result="outside-stroke"/>
-              <!--inside-stroke-->
-              <feFlood flood-color="rgba(0, 0, 0, 0.67)" result="inside-color"/>
-              <feComposite in2="SourceAlpha" operator="in" result="inside-stroke"/>
-              <!--fill-area-->
-              <feMorphology in="SourceAlpha" operator="erode" radius="0.25"/>
-              <feComposite in="SourceGraphic" operator="in" result="fill-area"/>
-              <!--merge graphics-->
-              <feMerge>
-                <feMergeNode in="outside-stroke"/>
-                <feMergeNode in="inside-stroke"/>
-                <feMergeNode in="fill-area"/>
-              </feMerge>
-            </filter>
-          </defs>
-          <path bind:this={rgbPointyPath} fill="red" d="M5 1 Q5.8 4.2 9 5 Q5.8 5.8 5 9 Q4.2 5.8 1 5 Q4.2 4.2 5 1z" filter="url(#inset)"></path>
-        </svg>
-      </div>
+      <div bind:this={rgbPointyIndicator} class="color-picker-rgb-slider"><div class="color-picker-rgb-slider-inner"></div></div>
       <canvas bind:this={rgbCanvas} on:pointerdown={onRGBPointerDown} class="color-picker-rgb" width="20" height="256"></canvas>
     </div>
 </div>
