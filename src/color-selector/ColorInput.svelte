@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { hue, saturation, value } from './selected-colors.store';
+  import { alpha, hue, saturation, value } from './selected-colors.store';
   import { clamp } from '../helpers/math-helpers';
   import type { ColorRGB } from '../models/color-rgb';
   import { onDestroy, onMount } from 'svelte';
   import type { Unsubscriber } from 'svelte/store';
-  import { hexToRGB, hsvToRGB, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
+  import { hexToRGB, hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
 
   // If we update RGB colors or hex directly we don't want to HSV events to update the RGB values because it makes it impossible to edit values!
   let blockRGBHexUpdate: boolean = false;
@@ -79,6 +79,16 @@
     updateHSV();
   }
 
+  function onAlphaChange(event: InputEvent): void {
+    const target = event.target as HTMLInputElement;
+    let a = parseFloat(target.value);
+    a = clampInput(a, 0, 1);
+
+    alpha.set(a);
+
+    updateHex(rgb.red, rgb.green, rgb.blue, a);
+  }
+
   function onHexChange(event: InputEvent): void {
     const element = event.target as HTMLInputElement;
     const hex = element.value;
@@ -87,6 +97,10 @@
     rgb.red = rgba.red;
     rgb.green = rgba.green;
     rgb.blue = rgba.blue;
+
+    // 3 decimal precision for alpha,  1 / 255 = 0.0039
+    const a = Math.round(rgba.alpha * 1000) / 1000;
+    alpha.set(a);
 
     updateHSV();
   }
@@ -120,7 +134,25 @@
     rgb.green = color.green;
     rgb.blue = color.blue;
 
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.red, $alpha);
+  }
+
+  /**
+   * Update the hex and add alpha if less than 255.
+   * @param red [0, 255]
+   * @param green [0, 255]
+   * @param blue [0, 255]
+   * @param a [0, 1]
+   */
+  function updateHex(red: number, green: number, blue: number, a: number): void {
+    // We floor the alpha rounding so that if it's 0.99 it's still 245.
+    a = Math.floor(a * 255);
+
+    if (a === 255) {
+      hex = rgbToHex(red, green, blue);
+    } else {
+      hex = rgbaToHex(red, green, blue, a);
+    }
   }
 
   function getAndSetRoundedInputValue(event: InputEvent): number {
@@ -139,25 +171,35 @@
 
 </script>
 <style lang="scss">
+  $label-length: 34px;
+  $input-length: 84px;
+
   .color-input-container {
     display: grid;
-    grid-gap: 0.4rem;
+    grid-gap: 6px;
   }
 
   .color-group {
     display: grid;
-    grid-gap: 0.25rem;
+    grid-gap: 4px;
   }
 
-  label {
+  .input-group {
+    display: flex;
+    align-items: center;
+    width: $label-length + $input-length;
+  }
+
+  .label-text {
     display: inline-block;
-    width: 2rem;
-    text-align:right;
+    width: $label-length;
+    padding-right: 4px;
+    text-align: right;
   }
 
   input {
-    width: 5.25rem;
-    padding: 0.125rem;
+    width: $input-length;
+    padding: 2px;
     text-align: right;
   }
 
@@ -176,35 +218,39 @@
 
 <div class="color-input-container">
   <div class="color-group">
-    <div class="input-group">
-      <label for="nuu_hsv_hue">H: </label>
-      <input id="nuu_hsv_hue" value={$hue} on:input={onHueChange} type="number" step="1" min="0" max="360">
-    </div>
-    <div class="input-group">
-      <label for="nuu_hsv_saturation">S: </label>
-      <input id="nuu_hsv_saturation" value={Math.round($saturation * 100)} on:input={onSaturationChange} type="number" step="1" min="0" max="100">
-    </div>
-    <div class="input-group">
-      <label for="nuu_hsv_value">V: </label>
-      <input id="nuu_hsv_value" value={Math.round($value * 100)} on:input={onValueChange} type="number" step="1" min="0" max="100">
-    </div>
+    <label class="input-group">
+      <span class="label-text">H:</span>
+      <input value={$hue} on:input={onHueChange} type="number" step="1" min="0" max="360">
+    </label>
+    <label class="input-group">
+      <span class="label-text">S:</span>
+      <input value={Math.round($saturation * 100)} on:input={onSaturationChange} type="number" step="1" min="0" max="100">
+    </label>
+    <label class="input-group">
+      <span class="label-text">V:</span>
+      <input value={Math.round($value * 100)} on:input={onValueChange} type="number" step="1" min="0" max="100">
+    </label>
   </div>
   <div class="color-group">
-    <div class="input-group">
-      <label for="nuu_red">R: </label>
-      <input id="nuu_red" value={rgb.red} on:input={onRedChange} type="number" step="1" min="0" max="255">
-    </div>
-    <div class="input-group">
-      <label for="nuu_green">G: </label>
-      <input id="nuu_green" value={rgb.green} on:input={onGreenChange} type="number" step="1" min="0" max="255">
-    </div>
-    <div class="input-group">
-      <label for="nuu_blue">B: </label>
-      <input id="nuu_blue" value={rgb.blue} on:input={onBlueChange} type="number" step="1" min="0" max="255">
-    </div>
-    <div class="input-group">
-      <label for="nuu_hex">HEX: </label>
-      <input id="nuu_hex" value="{hex}" on:input={onHexChange} type="text">
-    </div>
+    <label class="input-group">
+      <span class="label-text">R:</span>
+      <input value={rgb.red} on:input={onRedChange} type="number" step="1" min="0" max="255">
+    </label>
+    <label class="input-group">
+      <span class="label-text">G:</span>
+      <input value={rgb.green} on:input={onGreenChange} type="number" step="1" min="0" max="255">
+    </label>
+    <label class="input-group">
+      <span class="label-text">B:</span>
+      <input value={rgb.blue} on:input={onBlueChange} type="number" step="1" min="0" max="255">
+    </label>
+    <label class="input-group">
+      <span class="label-text">A:</span>
+      <input value={$alpha} on:input={onAlphaChange} type="number" step="0.01" min="0" max="1">
+    </label>
+    <label class="input-group">
+      <span class="label-text">HEX:</span>
+      <input value="{hex}" on:input={onHexChange} type="text">
+    </label>
   </div>
 </div>

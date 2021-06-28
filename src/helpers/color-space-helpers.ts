@@ -39,11 +39,13 @@ export function rgbToHex(red: number, green: number, blue: number): string {
   let hexGreen = componentToHex(green);
   let hexBlue = componentToHex(blue);
 
-  if (hexRed.length === 1) { hexRed = '0' + hexRed; }
-  if (hexGreen.length === 1) { hexGreen = '0' + hexGreen; }
-  if (hexBlue.length === 1) { hexBlue = '0' + hexBlue; }
-
   return `#${hexRed}${hexGreen}${hexBlue}`;
+}
+
+export function rgbaToHex(red: number, green: number, blue: number, alpha: number): string {
+  let hex = rgbToHex(red, green, blue);
+  const alphaHex = componentToHex(alpha);
+  return hex + alphaHex;
 }
 
 export function componentToHex(color: number): string {
@@ -200,6 +202,10 @@ export function getViewHSL(hue: number, saturation: number, lightness: number): 
  */
 export const getHexValuesRegex = /^#?([a-fA-F0-9]{3,4}){1,2}$/;
 
+/**
+ * Hex string to RGB.
+ * Example of input: #abc, #aabbccdd (alpha), #aabbcc #aabbccdd (alpha)
+ */
 export function hexToRGB(hex: string): ColorRGBA {
   const rgba: ColorRGBA = {
     red: 0,

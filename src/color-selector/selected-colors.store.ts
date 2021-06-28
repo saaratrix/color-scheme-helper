@@ -5,6 +5,11 @@ import { ColorSelectionMode } from './color-selection-mode';
 export const selectionMode = writable<ColorSelectionMode>(ColorSelectionMode.HSV)
 
 /**
+ * Range: [0, 1]
+ */
+export const alpha = writable<number>(1);
+
+/**
  * Range: [0°, 360°]
  */
 export const hue = writable<number>(360);
