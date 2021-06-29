@@ -2,19 +2,21 @@
   import ColorPicker from "./ColorPicker.svelte";
   import ColorInput from "./ColorInput.svelte";
   import NuuSelectedColor from "./NuuSelectedColor.svelte";
-  import { hue, saturation, value } from './selected-colors.store';
-  import { ColorHSV } from '../models/color-hsv';
+  import { hue, saturation, value, alpha } from './selected-colors.store';
+  import type { ColorHSVA } from '../models/color-hsva';
 
-  let oldHSVColor: ColorHSV = {
+  let oldHSVAColor: ColorHSVA = {
     hue: Math.round(Math.random() * 360),
     saturation: Math.random(),
     value: Math.random(),
+    alpha: 1,
   }
 
   function selectColor(): void {
-    oldHSVColor.hue = $hue;
-    oldHSVColor.saturation = $saturation;
-    oldHSVColor.value = $value;
+    oldHSVAColor.hue = $hue;
+    oldHSVAColor.saturation = $saturation;
+    oldHSVAColor.value = $value;
+    oldHSVAColor.alpha = $alpha;
   }
 </script>
 <style lang="scss">
@@ -71,7 +73,7 @@
     <ColorInput />
     <div class="color-selected-container">
       <div class="selected-color-container">
-        <NuuSelectedColor oldHSVColor="{oldHSVColor}" />
+        <NuuSelectedColor bind:oldHSVAColor="{oldHSVAColor}" />
       </div>
       <div class="color-confirm" on:click={selectColor}><span class="color-confirm-button" title="OK!">✓</span></div>
     </div>

@@ -25,7 +25,13 @@ export function hsvToRGBAToCSS(hue: number, saturation: number, value: number, a
 export function hsvToCSS(hue: number, saturation: number, value: number): string {
   let hsl = hsvToHSL(hue, saturation, value);
   hsl = getViewHSL(hsl.hue, hsl.saturation, hsl.lightness);
-  return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%`;
+  return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%)`;
+}
+
+export function hsvaToCSS(hue: number, saturation: number, value: number, alpha: number): string {
+  let hsl = hsvToHSL(hue, saturation, value);
+  hsl = getViewHSL(hsl.hue, hsl.saturation, hsl.lightness);
+  return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%, ${alpha})`;
 }
 
 /**
