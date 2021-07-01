@@ -139,16 +139,13 @@
 
   /**
    * Update the hex and add alpha if less than 255.
-   * @param red [0, 255]
-   * @param green [0, 255]
-   * @param blue [0, 255]
-   * @param a [0, 1]
+   * @param red Range: [0, 255]
+   * @param green Range: [0, 255]
+   * @param blue Range: [0, 255]
+   * @param a Range: [0, 1]
    */
   function updateHex(red: number, green: number, blue: number, a: number): void {
-    // We floor the alpha rounding so that if it's 0.99 it's still 245.
-    a = Math.floor(a * 255);
-
-    if (a === 255) {
+    if (a === 1) {
       hex = rgbToHex(red, green, blue);
     } else {
       hex = rgbaToHex(red, green, blue, a);

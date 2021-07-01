@@ -4,6 +4,7 @@
   import { hue, saturation, value, alpha } from './selected-colors.store';
   import type { ColorHSVA } from '../models/color-hsva';
   import type { Unsubscriber } from 'svelte/store';
+  import { drawAlphaBackground } from './color-picker-helpers';
 
   export let oldHSVAColor: ColorHSVA;
   // If oldHSVAColor changes then we want to draw new color! This can be changed if a user confirms their colour selection.
@@ -19,7 +20,6 @@
   let oldContext: CanvasRenderingContext2D | undefined;
 
   let subscriptions: Unsubscriber[] = [];
-
 
   onMount(() => {
     newContext = newCanvas.getContext('2d');
@@ -55,9 +55,11 @@
       return;
     }
 
-    context.clearRect(0, 0, canvasWidth, canvasHeight)
     if (a < 1) {
       // Draw alpha background!
+      drawAlphaBackground(canvasWidth, canvasHeight, context);
+    } else {
+      context.clearRect(0, 0, canvasWidth, canvasHeight);
     }
 
     const css = hsvaToCSS(h, s, v, a);

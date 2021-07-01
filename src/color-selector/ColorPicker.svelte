@@ -12,7 +12,6 @@
   let svContext: CanvasRenderingContext2D | undefined;
   let svIndicator: HTMLElement | undefined;
   let rgbCanvas: HTMLCanvasElement;
-  let rgbContext: CanvasRenderingContext2D | undefined;
   // Indicator to transform up & down based on color!
   let rgbPointyIndicator: HTMLElement | undefined;
 
@@ -25,15 +24,14 @@
     initEvents();
 
     svContext = svCanvas.getContext('2d');
-    rgbContext = rgbCanvas.getContext('2d');
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas);
+    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext);
 
     subscriptions.push(
       hue.subscribe(h => {
         const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
-        drawHSVBlock(rgba, svCanvas);
+        drawHSVBlock(rgba, svCanvas, svContext);
         const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height);
         rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`;
         rgbPointyIndicator.style.backgroundColor = rgba;

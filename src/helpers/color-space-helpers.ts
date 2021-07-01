@@ -28,10 +28,17 @@ export function hsvToCSS(hue: number, saturation: number, value: number): string
   return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%)`;
 }
 
+/**
+ * Convert HSVA to HSLA
+ * @param hue
+ * @param saturation
+ * @param value
+ * @param alpha
+ */
 export function hsvaToCSS(hue: number, saturation: number, value: number, alpha: number): string {
   let hsl = hsvToHSL(hue, saturation, value);
   hsl = getViewHSL(hsl.hue, hsl.saturation, hsl.lightness);
-  return `hsl(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%, ${alpha})`;
+  return `hsla(${hsl.hue}, ${hsl.saturation}%, ${hsl.lightness}%, ${alpha})`;
 }
 
 /**
@@ -48,12 +55,26 @@ export function rgbToHex(red: number, green: number, blue: number): string {
   return `#${hexRed}${hexGreen}${hexBlue}`;
 }
 
+/**
+ * Convert RGBA to HEX.
+ * @param red Range: [0, 255]
+ * @param blue Range: [0, 255]
+ * @param green Range: [0, 255]
+ * @param alpha Range: [0, 1]
+ */
 export function rgbaToHex(red: number, green: number, blue: number, alpha: number): string {
+  // We floor the alpha rounding so that if it's 0.99 it's still 245.
+  alpha = Math.floor(alpha * 255);
+
   let hex = rgbToHex(red, green, blue);
   const alphaHex = componentToHex(alpha);
   return hex + alphaHex;
 }
 
+/**
+ * Convert a color component from 0 -> 255 into hex.
+ * @param color Range: [0, 255]
+ */
 export function componentToHex(color: number): string {
   let hex = color.toString(16);
   return hex.length === 1 ? '0' + hex : hex;
@@ -189,7 +210,7 @@ export function hsvToHSL(hue: number, saturation: number, value: number): ColorH
 }
 
 /**
- * Rounds and multiplies saturation & lightness by 100.
+ * Rounds and multiplies saturation & lightness so it's in the range of 0 -> 100.
  * @param hue Range: [0°, 360°]
  * @param saturation Range: [0, 1]
  * @param lightness Range: [0, 1]
@@ -217,7 +238,7 @@ export function hexToRGB(hex: string): ColorRGBA {
     red: 0,
     green: 0,
     blue: 0,
-    alpha: 255,
+    alpha: 1,
   };
 
   if (!getHexValuesRegex.test(hex)) {
@@ -247,6 +268,7 @@ function extractHex(hex: string, rgba: ColorRGBA, r1, r2, g1, g2, b1, b2, a1 = -
   rgba.blue = parseInt(hex[b1] + hex[b2], 16);
 
   if (a1 > 0) {
-    rgba.alpha = parseInt(hex[a1] + hex[a2], 16);
+    const alpha = parseInt(hex[a1] + hex[a2], 16);
+    rgba.alpha = alpha / 255;
   }
 }

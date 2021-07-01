@@ -26,8 +26,7 @@ export function drawRGBStrip(canvas: HTMLCanvasElement): void {
  *
  * @param color Example input: rgba(0, 0, 0, 1)
  */
-export function drawHSVBlock(color: string, canvas: HTMLCanvasElement): void {
-  const context = canvas.getContext('2d');
+export function drawHSVBlock(color: string, canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): void {
   const width = canvas.width;
   const height = canvas.height;
   context.fillStyle = color;
@@ -48,4 +47,28 @@ export function drawHSVBlock(color: string, canvas: HTMLCanvasElement): void {
   blackGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
   context.fillStyle = blackGradient;
   context.fillRect(0, 0, width, height);
+}
+
+export function drawAlphaBackground(width: number, height: number, context: CanvasRenderingContext2D): void {
+  const darkColor = 'rgb(192, 192, 192)';
+  const lightColor = 'rgb(255, 255, 255)';
+  // Size in pixels
+  const size = 8;
+  const doubleSize = size * 2;
+
+  context.fillStyle = darkColor;
+  // Fill the whole draw area in dark
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = lightColor;
+
+  // Then we draw the tiles 2 blocks at a time like this repeated over x axis then y axis.
+  // * l
+  // l *
+  // * is where the dark tile would have been but it's already dark because we filled the whole canvas.
+  for (let y = 0; y < height; y += doubleSize) {
+    for (let x = 0; x < width; x += doubleSize) {
+      context.fillRect(x + size, y, size, size);
+      context.fillRect(x, y + size, size, size);
+    }
+  }
 }
