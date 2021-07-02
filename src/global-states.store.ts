@@ -20,7 +20,7 @@ function createIsDragging(): IsDragging {
     removeDragging: () => {
       interactingCounts--;
       if (interactingCounts < 0) {
-        console.log('too many draggers were removed!');
+        console.log('nuu color picker: too many draggers were removed!');
         interactingCounts = 0;
       }
 

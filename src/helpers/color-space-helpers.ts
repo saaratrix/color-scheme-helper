@@ -3,12 +3,26 @@ import type { ColorHSL } from '../models/color-hsl';
 import type { ColorHSV } from '../models/color-hsv';
 import type { ColorRGBA } from '../models/color-rgba';
 
-export function rgbToCSS(r: number, g: number, b: number): string {
-  return `rgb(${r}, ${g}, ${b})`;
+
+/**
+ * Convert RGB to rgb(red, green, blue)
+ * @param red Range: [0, 255]
+ * @param green Range: [0, 255]
+ * @param blue Range: [0, 255]
+ */
+export function rgbToCSS(red: number, green: number, blue: number): string {
+  return `rgb(${red}, ${green}, ${blue})`;
 }
 
-export function rgbaToCSS(r: number, g: number, b: number, a: number): string {
-  return `rgb(${r}, ${g}, ${b}, ${a})`;
+/**
+ * Convert RGBA to rgba(red, green, blue, alpha)
+ * @param red Range: [0, 255]
+ * @param green Range: [0, 255]
+ * @param blue Range: [0, 255]
+ * @param alpha Range: [0, 1]
+ */
+export function rgbaToCSS(red: number, green: number, blue: number, alpha: number): string {
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
 export function hsvToRGBAToCSS(hue: number, saturation: number, value: number, alpha: number): string {
@@ -188,24 +202,46 @@ export function hsvToRGB(hue: number, saturation: number, value: number): ColorR
 
 // Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_HSL
 /**
- * Rounds and multiplies saturation & lightness by 100.
+ * Convert HSV to HSL.
  * @param hue Range: [0°, 360°]
  * @param saturation Range: [0, 1]
  * @param value Range: [0, 1]
  */
 export function hsvToHSL(hue: number, saturation: number, value: number): ColorHSL {
-  const l = value * (1 - saturation / 2);
+  const lightness = value * (1 - saturation / 2);
   // sv = 0 if value == 0
-  let sv = 0;
+  let sl = 0;
   if (value !== 0) {
-    sv = (value - l) / Math.min(l, 1 - l);
+    sl = (value - lightness) / Math.min(lightness, 1 - lightness);
   }
 
   return {
     // Hl = Hv
     hue,
+    saturation: sl,
+    lightness,
+  };
+}
+
+// Formula: https://en.wikipedia.org/wiki/HSL_and_HSV#HSL_to_HSV
+/**
+ * Convert HSL to HSV.
+ * @param hue Range: [0°, 360°]
+ * @param saturation Range: [0, 1]
+ * @param lightness Range: [0, 1]
+ */
+export function hslToHSV(hue: number, saturation: number, lightness: number): ColorHSV {
+  const value = lightness + saturation * Math.min(lightness, 1 - lightness);
+  let sv = 0;
+  if (value !== 0) {
+    sv = 2 * (1 - lightness / value);
+  }
+
+  return {
+    // Hv = Hl
+    hue,
     saturation: sv,
-    lightness: l,
+    value,
   };
 }
 
@@ -223,52 +259,8 @@ export function getViewHSL(hue: number, saturation: number, lightness: number): 
   };
 }
 
-// Regex source: https://stackoverflow.com/a/53936623/2437350
-/**
- * Finds hex values for for #fff, #ffff, #ffffff, #ffffffff and without #.
- */
-export const getHexValuesRegex = /^#?([a-fA-F0-9]{3,4}){1,2}$/;
-
-/**
- * Hex string to RGB.
- * Example of input: #abc, #aabbccdd (alpha), #aabbcc #aabbccdd (alpha)
- */
-export function hexToRGB(hex: string): ColorRGBA {
-  const rgba: ColorRGBA = {
-    red: 0,
-    green: 0,
-    blue: 0,
-    alpha: 1,
-  };
-
-  if (!getHexValuesRegex.test(hex)) {
-    return rgba;
-  }
-
-  if (hex[0] === '#') {
-    hex = hex.substring(1);
-  }
-
-  if (hex.length === 3) {
-    extractHex(hex, rgba, 0, 0, 1, 1, 2, 2);
-  } else if (hex.length === 6) {
-    extractHex(hex, rgba, 0, 1, 2, 3, 4, 5);
-  } else if (hex.length === 4) {
-    extractHex(hex, rgba, 0, 0, 1, 1, 2, 2, 3, 3);
-  } else if (hex.length === 8) {
-    extractHex(hex, rgba, 0, 1, 2, 3, 4, 5, 6, 7);
-  }
-
-  return rgba;
-}
-
-function extractHex(hex: string, rgba: ColorRGBA, r1, r2, g1, g2, b1, b2, a1 = -1, a2 = -1): void {
-  rgba.red = parseInt(hex[r1] + hex[r2], 16);
-  rgba.green = parseInt(hex[g1] + hex[g2], 16);
-  rgba.blue = parseInt(hex[b1] + hex[b2], 16);
-
-  if (a1 > 0) {
-    const alpha = parseInt(hex[a1] + hex[a2], 16);
-    rgba.alpha = alpha / 255;
-  }
+export function roundAlpha(alpha: number): number {
+  // 3 decimal precision for alpha,  1 / 255 = 0.0039
+  // Also round to 3 decimal precision or it could look like 0.12381624.
+  return Math.floor(alpha * 1000) / 1000;
 }

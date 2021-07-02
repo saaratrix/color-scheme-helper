@@ -4,7 +4,8 @@
   import type { ColorRGB } from '../models/color-rgb';
   import { onDestroy, onMount } from 'svelte';
   import type { Unsubscriber } from 'svelte/store';
-  import { hexToRGB, hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV } from '../helpers/color-space-helpers';
+  import { hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
+  import { parseHexToRGBA } from './color-parsing';
 
   // If we update RGB colors or hex directly we don't want to HSV events to update the RGB values because it makes it impossible to edit values!
   let blockRGBHexUpdate: boolean = false;
@@ -92,14 +93,13 @@
   function onHexChange(event: InputEvent): void {
     const element = event.target as HTMLInputElement;
     const hex = element.value;
-    const rgba = hexToRGB(hex);
+    const rgba = parseHexToRGBA(hex);
 
     rgb.red = rgba.red;
     rgb.green = rgba.green;
     rgb.blue = rgba.blue;
 
-    // 3 decimal precision for alpha,  1 / 255 = 0.0039
-    const a = Math.round(rgba.alpha * 1000) / 1000;
+    const a = roundAlpha(rgba.alpha);
     alpha.set(a);
 
     updateHSV();

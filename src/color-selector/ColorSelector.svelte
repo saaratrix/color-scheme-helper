@@ -4,12 +4,67 @@
   import NuuSelectedColor from "./NuuSelectedColor.svelte";
   import { hue, saturation, value, alpha } from './selected-colors.store';
   import type { ColorHSVA } from '../models/color-hsva';
+  import { onMount } from 'svelte';
+  import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from './color-parsing';
+  import { rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
 
-  let oldHSVAColor: ColorHSVA = {
-    hue: Math.round(Math.random() * 360),
-    saturation: Math.random(),
-    value: Math.random(),
-    alpha: 1,
+  export let color: string = '';
+  $: color, parseColor();
+
+  // Give default value or it'll crash when mounting components.
+  let oldHSVAColor: ColorHSVA = createDefaultHSVColor();
+
+  onMount(() => {
+    parseColor();
+  });
+
+  function parseColor(): void {
+    let parsedColor: ColorHSVA = createDefaultHSVColor();
+    // For example `color` would make the value be true and then color.startsWith would fail.
+    if (!color || !color.startsWith) {
+      console.log('nuu color picker: could not parse input color.');
+      oldHSVAColor = parsedColor
+      return;
+    }
+
+    // Parse the input color!
+    if (color.includes('hsl')) {
+      // Parse it as HSL!
+      parseHSLFromCSS(color, parsedColor);
+    } else if (color.includes('rgb')) {
+      // Parse it as RGBA
+      parseRGBFromCSS(color, parsedColor);
+    } else {
+      parseHex(color, parsedColor);
+    }
+
+    // It's easier to set alpha first than to fix the event bug that changing hex would update alpha which would unset everything!
+    // So if the UI changes that bug needs to be solved.
+    alpha.set(parsedColor.alpha);
+    hue.set(parsedColor.hue);
+    saturation.set(parsedColor.saturation);
+    value.set(parsedColor.value);
+    oldHSVAColor = parsedColor;
+  }
+
+  function parseHex(color: string, targetColor: ColorHSVA): void {
+    // Parse it as HEX!
+    const rgba = parseHexToRGBA(color);
+    const hsv = rgbToHSV(rgba.red, rgba.green, rgba.blue);
+    const a = roundAlpha(rgba.alpha);
+    targetColor.hue = hsv.hue;
+    targetColor.saturation = hsv.saturation;
+    targetColor.value = hsv.value;
+    targetColor.alpha = a;
+  }
+
+  function createDefaultHSVColor(): ColorHSVA {
+    return {
+      hue: 360,
+      saturation: 1,
+      value: 1,
+      alpha: 1,
+    };
   }
 
   function selectColor(): void {
