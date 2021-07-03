@@ -5,7 +5,7 @@
   import { hue, saturation, value, alpha } from './selected-colors.store';
   import type { ColorHSVA } from '../models/color-hsva';
   import { onMount } from 'svelte';
-  import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from './color-parsing';
+  import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from '../helpers/color-parsing';
   import { rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
 
   export let color: string = '';

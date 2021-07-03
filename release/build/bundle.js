@@ -393,7 +393,6 @@ var app = (function () {
         $inject_state() { }
     }
 
-    // Modified source: https://codepen.io/pizza3/pen/BVzYNP
     function drawRGBStrip(canvas) {
         const context = canvas.getContext('2d');
         const width = canvas.width;
@@ -419,25 +418,31 @@ var app = (function () {
      *
      * @param color Example input: rgba(0, 0, 0, 1)
      */
-    function drawHSVBlock(color, canvas, context) {
+    function drawHSVBlock(color, canvas, context, gradients) {
         const width = canvas.width;
         const height = canvas.height;
         context.fillStyle = color;
         context.fillRect(0, 0, width, height);
+        context.fillStyle = gradients.xGradient;
+        context.fillRect(0, 0, width, height);
+        context.fillStyle = gradients.yGradient;
+        context.fillRect(0, 0, width, height);
+    }
+    function createHSVGradients(width, height, context) {
         // Draw a fully white gradient from left side to the right that will lose opacity.
         // So on the right side it's the full color.
         const whiteGradient = context.createLinearGradient(0, 0, width, 0);
         whiteGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
         whiteGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        context.fillStyle = whiteGradient;
-        context.fillRect(0, 0, width, height);
         // Draw a fully black gradient from bottom to top.
         // So that on the bottom it's fully black and at the top it's the full color.
         const blackGradient = context.createLinearGradient(0, 0, 0, height);
         blackGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
         blackGradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
-        context.fillStyle = blackGradient;
-        context.fillRect(0, 0, width, height);
+        return {
+            xGradient: whiteGradient,
+            yGradient: blackGradient,
+        };
     }
     function drawAlphaBackground(width, height, context) {
         const darkColor = 'rgb(192, 192, 192)';
@@ -834,27 +839,27 @@ var app = (function () {
     			t2 = space();
     			canvas1 = element("canvas");
     			attr_dev(div0, "class", "color-picker-inner-circle svelte-1o9t59s");
-    			add_location(div0, file$4, 158, 73, 4918);
+    			add_location(div0, file$4, 170, 73, 5554);
     			attr_dev(div1, "class", "color-picker-circle-indicator svelte-1o9t59s");
-    			add_location(div1, file$4, 158, 6, 4851);
+    			add_location(div1, file$4, 170, 6, 5487);
     			attr_dev(canvas0, "width", "256");
     			attr_dev(canvas0, "height", "256");
     			attr_dev(canvas0, "class", "color-picker-saturation-lightness svelte-1o9t59s");
-    			add_location(canvas0, file$4, 159, 6, 4977);
+    			add_location(canvas0, file$4, 171, 6, 5613);
     			attr_dev(div2, "class", "color-picker-sv-container svelte-1o9t59s");
-    			add_location(div2, file$4, 157, 4, 4804);
+    			add_location(div2, file$4, 169, 4, 5440);
     			attr_dev(div3, "class", "color-picker-rgb-slider-inner svelte-1o9t59s");
-    			add_location(div3, file$4, 162, 74, 5249);
+    			add_location(div3, file$4, 174, 74, 5885);
     			attr_dev(div4, "class", "color-picker-rgb-slider svelte-1o9t59s");
-    			add_location(div4, file$4, 162, 6, 5181);
+    			add_location(div4, file$4, 174, 6, 5817);
     			attr_dev(canvas1, "class", "color-picker-rgb svelte-1o9t59s");
     			attr_dev(canvas1, "width", "20");
     			attr_dev(canvas1, "height", "256");
-    			add_location(canvas1, file$4, 163, 6, 5312);
+    			add_location(canvas1, file$4, 175, 6, 5948);
     			attr_dev(div5, "class", "color-picker-rgb-container svelte-1o9t59s");
-    			add_location(div5, file$4, 161, 4, 5133);
+    			add_location(div5, file$4, 173, 4, 5769);
     			attr_dev(div6, "class", "color-picker svelte-1o9t59s");
-    			add_location(div6, file$4, 156, 0, 4772);
+    			add_location(div6, file$4, 168, 0, 5408);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -916,16 +921,18 @@ var app = (function () {
     	let $value;
     	let $saturation;
     	validate_store(hue, "hue");
-    	component_subscribe($$self, hue, $$value => $$invalidate(13, $hue = $$value));
+    	component_subscribe($$self, hue, $$value => $$invalidate(15, $hue = $$value));
     	validate_store(value, "value");
-    	component_subscribe($$self, value, $$value => $$invalidate(14, $value = $$value));
+    	component_subscribe($$self, value, $$value => $$invalidate(16, $value = $$value));
     	validate_store(saturation, "saturation");
-    	component_subscribe($$self, saturation, $$value => $$invalidate(15, $saturation = $$value));
+    	component_subscribe($$self, saturation, $$value => $$invalidate(17, $saturation = $$value));
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("ColorPicker", slots, []);
     	
+    	
     	let svCanvas;
     	let svContext;
+    	let svGradients;
     	let svIndicator;
     	let rgbCanvas;
 
@@ -936,21 +943,30 @@ var app = (function () {
     	let rgbPointerDown = false;
     	const subscriptions = [];
 
+    	// Temporary saturation blocker, the event system should be rewritten to be hsva.subscribe() instead of each individual component.
+    	// but this halves the amount of DOM repaints.
+    	let tempSaturationBlocker = false;
+
     	onMount(() => {
     		initEvents();
     		svContext = svCanvas.getContext("2d");
+    		svGradients = createHSVGradients(svCanvas.width, svCanvas.height, svContext);
     		drawRGBStrip(rgbCanvas);
-    		drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext);
+    		drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext, svGradients);
 
     		subscriptions.push(
     			hue.subscribe(h => {
     				const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
-    				drawHSVBlock(rgba, svCanvas, svContext);
+    				drawHSVBlock(rgba, svCanvas, svContext, svGradients);
     				const rgbIndicatorTop = (360 - h) / 360 * rgbCanvas.height;
     				$$invalidate(3, rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`, rgbPointyIndicator);
     				$$invalidate(3, rgbPointyIndicator.style.backgroundColor = rgba, rgbPointyIndicator);
     			}),
     			saturation.subscribe(s => {
+    				if (tempSaturationBlocker) {
+    					return;
+    				}
+
     				$$invalidate(1, svIndicator.style.transform = getSVIndicatorTransform(s, $value), svIndicator);
     			}),
     			value.subscribe(v => {
@@ -968,7 +984,9 @@ var app = (function () {
     	});
 
     	function initEvents() {
+    		// TODO: Might want to add an option to confine this only to the color picker in case the user has an app that eats events.
     		window.addEventListener("pointerleave", onPointerLeave);
+
     		window.addEventListener("pointerup", onPointerUp);
     		window.addEventListener("pointermove", onPointerMove);
     	}
@@ -1017,8 +1035,10 @@ var app = (function () {
     		const y = clamp(event.clientY - bounds.top, 0, svCanvas.height);
     		const s = x / svCanvas.width;
     		const v = 1 - y / svCanvas.height;
+    		tempSaturationBlocker = true;
     		saturation.set(s);
     		value.set(v);
+    		tempSaturationBlocker = false;
     	}
 
     	function onRGBPointerDown(event) {
@@ -1090,6 +1110,7 @@ var app = (function () {
     		onMount,
     		drawRGBStrip,
     		drawHSVBlock,
+    		createHSVGradients,
     		hsvToRGBAToCSS,
     		hue,
     		saturation,
@@ -1098,12 +1119,14 @@ var app = (function () {
     		clamp,
     		svCanvas,
     		svContext,
+    		svGradients,
     		svIndicator,
     		rgbCanvas,
     		rgbPointyIndicator,
     		svPointerDown,
     		rgbPointerDown,
     		subscriptions,
+    		tempSaturationBlocker,
     		initEvents,
     		removeEvents,
     		onPointerMove,
@@ -1122,11 +1145,13 @@ var app = (function () {
     	$$self.$inject_state = $$props => {
     		if ("svCanvas" in $$props) $$invalidate(0, svCanvas = $$props.svCanvas);
     		if ("svContext" in $$props) svContext = $$props.svContext;
+    		if ("svGradients" in $$props) svGradients = $$props.svGradients;
     		if ("svIndicator" in $$props) $$invalidate(1, svIndicator = $$props.svIndicator);
     		if ("rgbCanvas" in $$props) $$invalidate(2, rgbCanvas = $$props.rgbCanvas);
     		if ("rgbPointyIndicator" in $$props) $$invalidate(3, rgbPointyIndicator = $$props.rgbPointyIndicator);
     		if ("svPointerDown" in $$props) svPointerDown = $$props.svPointerDown;
     		if ("rgbPointerDown" in $$props) rgbPointerDown = $$props.rgbPointerDown;
+    		if ("tempSaturationBlocker" in $$props) tempSaturationBlocker = $$props.tempSaturationBlocker;
     	};
 
     	if ($$props && "$$inject" in $$props) {
@@ -1381,96 +1406,96 @@ var app = (function () {
     			t22 = space();
     			input7 = element("input");
     			attr_dev(span0, "class", "label-text svelte-1hkho8o");
-    			add_location(span0, file$3, 170, 6, 4955);
+    			add_location(span0, file$3, 170, 6, 4965);
     			input0.value = /*$hue*/ ctx[2];
     			attr_dev(input0, "type", "number");
     			attr_dev(input0, "step", "1");
     			attr_dev(input0, "min", "0");
     			attr_dev(input0, "max", "360");
     			attr_dev(input0, "class", "svelte-1hkho8o");
-    			add_location(input0, file$3, 171, 6, 4997);
+    			add_location(input0, file$3, 171, 6, 5007);
     			attr_dev(label0, "class", "input-group svelte-1hkho8o");
-    			add_location(label0, file$3, 169, 4, 4920);
+    			add_location(label0, file$3, 169, 4, 4930);
     			attr_dev(span1, "class", "label-text svelte-1hkho8o");
-    			add_location(span1, file$3, 174, 6, 5136);
+    			add_location(span1, file$3, 174, 6, 5146);
     			input1.value = input1_value_value = Math.round(/*$saturation*/ ctx[3] * 100);
     			attr_dev(input1, "type", "number");
     			attr_dev(input1, "step", "1");
     			attr_dev(input1, "min", "0");
     			attr_dev(input1, "max", "100");
     			attr_dev(input1, "class", "svelte-1hkho8o");
-    			add_location(input1, file$3, 175, 6, 5178);
+    			add_location(input1, file$3, 175, 6, 5188);
     			attr_dev(label1, "class", "input-group svelte-1hkho8o");
-    			add_location(label1, file$3, 173, 4, 5101);
+    			add_location(label1, file$3, 173, 4, 5111);
     			attr_dev(span2, "class", "label-text svelte-1hkho8o");
-    			add_location(span2, file$3, 178, 6, 5349);
+    			add_location(span2, file$3, 178, 6, 5359);
     			input2.value = input2_value_value = Math.round(/*$value*/ ctx[4] * 100);
     			attr_dev(input2, "type", "number");
     			attr_dev(input2, "step", "1");
     			attr_dev(input2, "min", "0");
     			attr_dev(input2, "max", "100");
     			attr_dev(input2, "class", "svelte-1hkho8o");
-    			add_location(input2, file$3, 179, 6, 5391);
+    			add_location(input2, file$3, 179, 6, 5401);
     			attr_dev(label2, "class", "input-group svelte-1hkho8o");
-    			add_location(label2, file$3, 177, 4, 5314);
+    			add_location(label2, file$3, 177, 4, 5324);
     			attr_dev(div0, "class", "color-group svelte-1hkho8o");
-    			add_location(div0, file$3, 168, 2, 4889);
+    			add_location(div0, file$3, 168, 2, 4899);
     			attr_dev(span3, "class", "label-text svelte-1hkho8o");
-    			add_location(span3, file$3, 184, 6, 5591);
+    			add_location(span3, file$3, 184, 6, 5601);
     			input3.value = input3_value_value = /*rgb*/ ctx[0].red;
     			attr_dev(input3, "type", "number");
     			attr_dev(input3, "step", "1");
     			attr_dev(input3, "min", "0");
     			attr_dev(input3, "max", "255");
     			attr_dev(input3, "class", "svelte-1hkho8o");
-    			add_location(input3, file$3, 185, 6, 5633);
+    			add_location(input3, file$3, 185, 6, 5643);
     			attr_dev(label3, "class", "input-group svelte-1hkho8o");
-    			add_location(label3, file$3, 183, 4, 5556);
+    			add_location(label3, file$3, 183, 4, 5566);
     			attr_dev(span4, "class", "label-text svelte-1hkho8o");
-    			add_location(span4, file$3, 188, 6, 5775);
+    			add_location(span4, file$3, 188, 6, 5785);
     			input4.value = input4_value_value = /*rgb*/ ctx[0].green;
     			attr_dev(input4, "type", "number");
     			attr_dev(input4, "step", "1");
     			attr_dev(input4, "min", "0");
     			attr_dev(input4, "max", "255");
     			attr_dev(input4, "class", "svelte-1hkho8o");
-    			add_location(input4, file$3, 189, 6, 5817);
+    			add_location(input4, file$3, 189, 6, 5827);
     			attr_dev(label4, "class", "input-group svelte-1hkho8o");
-    			add_location(label4, file$3, 187, 4, 5740);
+    			add_location(label4, file$3, 187, 4, 5750);
     			attr_dev(span5, "class", "label-text svelte-1hkho8o");
-    			add_location(span5, file$3, 192, 6, 5963);
+    			add_location(span5, file$3, 192, 6, 5973);
     			input5.value = input5_value_value = /*rgb*/ ctx[0].blue;
     			attr_dev(input5, "type", "number");
     			attr_dev(input5, "step", "1");
     			attr_dev(input5, "min", "0");
     			attr_dev(input5, "max", "255");
     			attr_dev(input5, "class", "svelte-1hkho8o");
-    			add_location(input5, file$3, 193, 6, 6005);
+    			add_location(input5, file$3, 193, 6, 6015);
     			attr_dev(label5, "class", "input-group svelte-1hkho8o");
-    			add_location(label5, file$3, 191, 4, 5928);
+    			add_location(label5, file$3, 191, 4, 5938);
     			attr_dev(span6, "class", "label-text svelte-1hkho8o");
-    			add_location(span6, file$3, 196, 6, 6149);
+    			add_location(span6, file$3, 196, 6, 6159);
     			input6.value = /*$alpha*/ ctx[5];
     			attr_dev(input6, "type", "number");
     			attr_dev(input6, "step", "0.01");
     			attr_dev(input6, "min", "0");
     			attr_dev(input6, "max", "1");
     			attr_dev(input6, "class", "svelte-1hkho8o");
-    			add_location(input6, file$3, 197, 6, 6191);
+    			add_location(input6, file$3, 197, 6, 6201);
     			attr_dev(label6, "class", "input-group svelte-1hkho8o");
-    			add_location(label6, file$3, 195, 4, 6114);
+    			add_location(label6, file$3, 195, 4, 6124);
     			attr_dev(span7, "class", "label-text svelte-1hkho8o");
-    			add_location(span7, file$3, 200, 6, 6335);
+    			add_location(span7, file$3, 200, 6, 6345);
     			input7.value = /*hex*/ ctx[1];
     			attr_dev(input7, "type", "text");
     			attr_dev(input7, "class", "svelte-1hkho8o");
-    			add_location(input7, file$3, 201, 6, 6379);
+    			add_location(input7, file$3, 201, 6, 6389);
     			attr_dev(label7, "class", "input-group svelte-1hkho8o");
-    			add_location(label7, file$3, 199, 4, 6300);
+    			add_location(label7, file$3, 199, 4, 6310);
     			attr_dev(div1, "class", "color-group svelte-1hkho8o");
-    			add_location(div1, file$3, 182, 2, 5525);
+    			add_location(div1, file$3, 182, 2, 5535);
     			attr_dev(div2, "class", "color-input-container svelte-1hkho8o");
-    			add_location(div2, file$3, 167, 0, 4850);
+    			add_location(div2, file$3, 167, 0, 4860);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1729,7 +1754,7 @@ var app = (function () {
     		$$invalidate(0, rgb.red = color.red, rgb);
     		$$invalidate(0, rgb.green = color.green, rgb);
     		$$invalidate(0, rgb.blue = color.blue, rgb);
-    		updateHex(rgb.red, rgb.green, rgb.red, $alpha);
+    		updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
     	}
 
     	/**
@@ -2166,20 +2191,20 @@ var app = (function () {
     			span = element("span");
     			span.textContent = "✓";
     			attr_dev(div0, "class", "color-picker-container");
-    			add_location(div0, file$1, 103, 2, 3084);
+    			add_location(div0, file$1, 103, 2, 3093);
     			attr_dev(div1, "class", "selected-color-container svelte-1a2i7y");
-    			add_location(div1, file$1, 109, 6, 3262);
+    			add_location(div1, file$1, 109, 6, 3271);
     			attr_dev(span, "class", "color-confirm-button svelte-1a2i7y");
     			attr_dev(span, "title", "OK!");
-    			add_location(span, file$1, 112, 56, 3437);
+    			add_location(span, file$1, 112, 56, 3446);
     			attr_dev(div2, "class", "color-confirm");
-    			add_location(div2, file$1, 112, 6, 3387);
+    			add_location(div2, file$1, 112, 6, 3396);
     			attr_dev(div3, "class", "color-selected-container svelte-1a2i7y");
-    			add_location(div3, file$1, 108, 4, 3216);
+    			add_location(div3, file$1, 108, 4, 3225);
     			attr_dev(div4, "class", "color-input-container svelte-1a2i7y");
-    			add_location(div4, file$1, 106, 2, 3155);
+    			add_location(div4, file$1, 106, 2, 3164);
     			attr_dev(div5, "class", "color-selector svelte-1a2i7y");
-    			add_location(div5, file$1, 102, 0, 3052);
+    			add_location(div5, file$1, 102, 0, 3061);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2446,7 +2471,7 @@ var app = (function () {
     		c: function create() {
     			main = element("main");
     			create_component(colorselector.$$.fragment);
-    			add_location(main, file, 24, 0, 717);
+    			add_location(main, file, 24, 0, 722);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");

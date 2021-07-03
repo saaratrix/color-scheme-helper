@@ -1,15 +1,17 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { drawRGBStrip, drawHSVBlock } from './color-picker-helpers';
+  import { drawRGBStrip, drawHSVBlock, createHSVGradients } from './color-picker-helpers';
   import { hsvToRGBAToCSS } from '../helpers/color-space-helpers';
 
   import { hue, saturation, value } from './selected-colors.store';
   import { isDragging } from '../global-states.store';
   import type { Unsubscriber } from 'svelte/store';
   import { clamp } from '../helpers/math-helpers';
+  import type { ColorGradients } from './color-gradients';
 
   let svCanvas: HTMLCanvasElement;
   let svContext: CanvasRenderingContext2D | undefined;
+  let svGradients: ColorGradients;
   let svIndicator: HTMLElement | undefined;
   let rgbCanvas: HTMLCanvasElement;
   // Indicator to transform up & down based on color!
@@ -19,24 +21,32 @@
   let rgbPointerDown: boolean = false;
 
   const subscriptions: Unsubscriber[] = [];
+  // Temporary saturation blocker, the event system should be rewritten to be hsva.subscribe() instead of each individual component.
+  // but this halves the amount of DOM repaints.
+  let tempSaturationBlocker: boolean = false;
 
   onMount((): void => {
     initEvents();
 
     svContext = svCanvas.getContext('2d');
+    svGradients = createHSVGradients(svCanvas.width, svCanvas.height, svContext);
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext);
+    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext, svGradients);
 
     subscriptions.push(
       hue.subscribe(h => {
         const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
-        drawHSVBlock(rgba, svCanvas, svContext);
+        drawHSVBlock(rgba, svCanvas, svContext, svGradients);
         const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height);
         rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`;
         rgbPointyIndicator.style.backgroundColor = rgba;
       }),
       saturation.subscribe(s => {
+        if (tempSaturationBlocker) {
+          return;
+        }
+
         svIndicator.style.transform = getSVIndicatorTransform(s, $value);
       }),
       value.subscribe(v => {
@@ -54,6 +64,7 @@
   });
 
   function initEvents(): void {
+    // TODO: Might want to add an option to confine this only to the color picker in case the user has an app that eats events.
     window.addEventListener('pointerleave', onPointerLeave);
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointermove', onPointerMove);
@@ -104,8 +115,10 @@
     const s = x / svCanvas.width;
     const v = 1 - (y / svCanvas.height);
 
+    tempSaturationBlocker = true;
     saturation.set(s);
     value.set(v);
+    tempSaturationBlocker = false;
   }
 
   function onRGBPointerDown(event: PointerEvent): void {
