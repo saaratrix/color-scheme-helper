@@ -57,7 +57,7 @@
     let red = getAndSetRoundedInputValue(event);
     red = clampInput(red, 0, 255);
     rgb.red = red;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -66,7 +66,7 @@
     let green = getAndSetRoundedInputValue(event);
     green = clampInput(green, 0, 255);
     rgb.green = green;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -75,7 +75,7 @@
     let blue = getAndSetRoundedInputValue(event);
     blue = clampInput(blue, 0, 255);
     rgb.blue = blue;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -169,7 +169,8 @@
 </script>
 <style lang="scss">
   $label-length: 34px;
-  $input-length: 84px;
+  // Can fit # + 8 letters
+  $input-length: 80px;
 
   .color-input-container {
     display: grid;
@@ -196,8 +197,9 @@
 
   input {
     width: $input-length;
-    padding: 2px;
+    padding: 1px;
     text-align: right;
+    font-family: "Courier New";
   }
 
   // Hide the arrows for a number.

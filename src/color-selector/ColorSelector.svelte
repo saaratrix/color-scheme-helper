@@ -8,6 +8,8 @@
   import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from '../helpers/color-parsing';
   import { rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
 
+  let rootElement: HTMLElement;
+
   export let color: string = '';
   $: color, parseColor();
 
@@ -87,7 +89,7 @@
   .color-input-container {
     display: grid;
     grid-gap: 6px;
-    padding: 0 4px;
+    margin-left: 4px;
   }
 
   .color-selected-container {
@@ -99,6 +101,7 @@
   .selected-color-container {
     // This also removes whitespace which adds 4 pixels to the height.
     display: flex;
+    border: 1px solid rgba(0, 0, 0, 0.67);
   }
 
   .color-confirm-button {
@@ -120,7 +123,7 @@
   }
 </style>
 
-<div class="color-selector">
+<div bind:this={rootElement} class="color-selector">
   <div class="color-picker-container">
     <ColorPicker />
   </div>
