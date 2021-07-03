@@ -21,6 +21,9 @@
   let rgbPointerDown: boolean = false;
 
   const subscriptions: Unsubscriber[] = [];
+  // Temporary saturation blocker, the event system should be rewritten to be hsva.subscribe() instead of each individual component.
+  // but this halves the amount of DOM repaints.
+  let tempSaturationBlocker: boolean = false;
 
   onMount((): void => {
     initEvents();
@@ -40,6 +43,10 @@
         rgbPointyIndicator.style.backgroundColor = rgba;
       }),
       saturation.subscribe(s => {
+        if (tempSaturationBlocker) {
+          return;
+        }
+
         svIndicator.style.transform = getSVIndicatorTransform(s, $value);
       }),
       value.subscribe(v => {
@@ -108,8 +115,10 @@
     const s = x / svCanvas.width;
     const v = 1 - (y / svCanvas.height);
 
+    tempSaturationBlocker = true;
     saturation.set(s);
     value.set(v);
+    tempSaturationBlocker = false;
   }
 
   function onRGBPointerDown(event: PointerEvent): void {
