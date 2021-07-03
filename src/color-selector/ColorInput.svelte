@@ -5,7 +5,7 @@
   import { onDestroy, onMount } from 'svelte';
   import type { Unsubscriber } from 'svelte/store';
   import { hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
-  import { parseHexToRGBA } from './color-parsing';
+  import { parseHexToRGBA } from '../helpers/color-parsing';
 
   // If we update RGB colors or hex directly we don't want to HSV events to update the RGB values because it makes it impossible to edit values!
   let blockRGBHexUpdate: boolean = false;
@@ -134,7 +134,7 @@
     rgb.green = color.green;
     rgb.blue = color.blue;
 
-    updateHex(rgb.red, rgb.green, rgb.red, $alpha);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
   }
 
   /**

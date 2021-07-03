@@ -1,5 +1,5 @@
 import type { ColorHSVA } from '../models/color-hsva';
-import { hslToHSV, rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
+import { hslToHSV, rgbToHSV, roundAlpha } from './color-space-helpers';
 import type { ColorRGBA } from '../models/color-rgba';
 
 function parseAlpha(value: string): number {
