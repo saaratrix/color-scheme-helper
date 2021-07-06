@@ -1,6 +1,6 @@
 import type { Unsubscriber } from 'svelte/store';
 
-export interface IsDragging {
+export interface IsDraggingColor {
   subscribe: (...args: unknown[]) => Unsubscriber;
   addDragging: () => void;
   removeDragging: () => void;

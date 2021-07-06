@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { alpha, hue, saturation, value } from './selected-colors.store';
-  import { clamp } from '../helpers/math-helpers';
-  import type { ColorRGB } from '../models/color-rgb';
+  import { alpha, hue, saturation, value } from './color-selector.store';
+  import { clamp } from './helpers/math-helpers';
+  import type { ColorRGB } from './models/colors/color-rgb';
   import { onDestroy, onMount } from 'svelte';
   import type { Unsubscriber } from 'svelte/store';
-  import { hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
-  import { parseHexToRGBA } from '../helpers/color-parsing';
+  import { hsvToRGB, rgbaToHex, rgbToHex, rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
+  import { parseHexToRGBA } from './helpers/color-parsing';
 
   // If we update RGB colors or hex directly we don't want to HSV events to update the RGB values because it makes it impossible to edit values!
   let blockRGBHexUpdate: boolean = false;
@@ -57,7 +57,7 @@
     let red = getAndSetRoundedInputValue(event);
     red = clampInput(red, 0, 255);
     rgb.red = red;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -66,7 +66,7 @@
     let green = getAndSetRoundedInputValue(event);
     green = clampInput(green, 0, 255);
     rgb.green = green;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -75,7 +75,7 @@
     let blue = getAndSetRoundedInputValue(event);
     blue = clampInput(blue, 0, 255);
     rgb.blue = blue;
-    hex = rgbToHex(rgb.red, rgb.green, rgb.blue);
+    updateHex(rgb.red, rgb.green, rgb.blue, $alpha);
 
     updateHSV();
   }
@@ -168,36 +168,56 @@
 
 </script>
 <style lang="scss">
-  $label-length: 34px;
-  $input-length: 84px;
+  // Can fit 0.001
+  $input-length: 48px;
+  // Can fit # + 8 letters
+  $input-hex-length: 80px;
 
-  .color-input-container {
+  .nuu-color-input {
     display: grid;
     grid-gap: 6px;
   }
 
   .color-group {
-    display: grid;
-    grid-gap: 4px;
+    display: flex;
+    justify-content: space-between;
   }
 
   .input-group {
     display: flex;
     align-items: center;
-    width: $label-length + $input-length;
+
+    &+.input-group {
+      margin-left: 4px;
+    }
   }
 
   .label-text {
     display: inline-block;
-    width: $label-length;
     padding-right: 4px;
     text-align: right;
   }
 
   input {
-    width: $input-length;
-    padding: 2px;
+    padding: 1px;
     text-align: right;
+    font-family: "Courier New";
+  }
+
+  .number-group {
+    //width: $label-length + $input-length;
+
+    input {
+      width: $input-length;
+    }
+  }
+
+  .hex-group {
+    //width: $label-length + $input-hex-length;
+
+    input {
+      width: $input-hex-length;
+    }
   }
 
   // Hide the arrows for a number.
@@ -213,39 +233,41 @@
   }
 </style>
 
-<div class="color-input-container">
+<div class="nuu-color-input">
   <div class="color-group">
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">H:</span>
       <input value={$hue} on:input={onHueChange} type="number" step="1" min="0" max="360">
     </label>
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">S:</span>
       <input value={Math.round($saturation * 100)} on:input={onSaturationChange} type="number" step="1" min="0" max="100">
     </label>
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">V:</span>
       <input value={Math.round($value * 100)} on:input={onValueChange} type="number" step="1" min="0" max="100">
     </label>
   </div>
   <div class="color-group">
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">R:</span>
       <input value={rgb.red} on:input={onRedChange} type="number" step="1" min="0" max="255">
     </label>
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">G:</span>
       <input value={rgb.green} on:input={onGreenChange} type="number" step="1" min="0" max="255">
     </label>
-    <label class="input-group">
+    <label class="input-group number-group">
       <span class="label-text">B:</span>
       <input value={rgb.blue} on:input={onBlueChange} type="number" step="1" min="0" max="255">
     </label>
-    <label class="input-group">
+  </div>
+  <div class="color-group color-group-alpha-hex">
+    <label class="input-group number-group">
       <span class="label-text">A:</span>
       <input value={$alpha} on:input={onAlphaChange} type="number" step="0.01" min="0" max="1">
     </label>
-    <label class="input-group">
+    <label class="input-group hex-group">
       <span class="label-text">HEX:</span>
       <input value="{hex}" on:input={onHexChange} type="text">
     </label>

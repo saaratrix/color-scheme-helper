@@ -1,5 +1,5 @@
 // Modified source: https://codepen.io/pizza3/pen/BVzYNP
-import type { ColorGradients } from './color-gradients';
+import type { ColorGradients } from '../models/colors/color-gradients';
 
 export function drawRGBStrip(canvas: HTMLCanvasElement): void {
   const context = canvas.getContext('2d');
