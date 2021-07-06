@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { drawRGBStrip, drawHSVBlock, createHSVGradients } from './color-picker-helpers';
-  import { hsvToRGBAToCSS } from '../helpers/color-space-helpers';
+  import { drawRGBStrip, drawHSVBlock, createHSVGradients } from './helpers/color-picker-helpers';
+  import { hsvToRGBAToCSS } from './helpers/color-space-helpers';
 
-  import { hue, saturation, value } from './selected-colors.store';
-  import { isDragging } from '../global-states.store';
+  import { hue, saturation, value, isDraggingColor } from './color-selector.store';
   import type { Unsubscriber } from 'svelte/store';
-  import { clamp } from '../helpers/math-helpers';
-  import type { ColorGradients } from './color-gradients';
+  import { clamp } from './helpers/math-helpers';
+  import type { ColorGradients } from './models/colors/color-gradients';
+
+  const svCanvasSize: number = 192;
+  // We get the height from the saturation & value canvas size.
+  const rgbCanvasWidth: number = 20;
 
   let svCanvas: HTMLCanvasElement;
   let svContext: CanvasRenderingContext2D | undefined;
@@ -38,7 +41,7 @@
       hue.subscribe(h => {
         const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
         drawHSVBlock(rgba, svCanvas, svContext, svGradients);
-        const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.height);
+        const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.offsetHeight);
         rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`;
         rgbPointyIndicator.style.backgroundColor = rgba;
       }),
@@ -77,16 +80,16 @@
   }
 
   function onPointerMove(event: PointerEvent): void {
-    onSLPointerMove(event);
+    onSVPointerMove(event);
     onRGBPointerMove(event);
   }
 
   function onPointerUp(): void {
     if (svPointerDown) {
-      isDragging.removeDragging();
+      isDraggingColor.removeDragging();
     }
     if (rgbPointerDown) {
-      isDragging.removeDragging();
+      isDraggingColor.removeDragging();
     }
 
     svPointerDown = false;
@@ -99,23 +102,25 @@
 
   function onSVPointerDown(event: PointerEvent): void {
     svPointerDown = true;
-    onSLPointerMove(event);
-    isDragging.addDragging();
+    onSVPointerMove(event);
+    isDraggingColor.addDragging();
   }
 
-  function onSLPointerMove(event: PointerEvent): void {
+  function onSVPointerMove(event: PointerEvent): void {
     if (!svPointerDown) {
       return;
     }
 
     const bounds = svCanvas.getBoundingClientRect();
-    const x = clamp(event.clientX - bounds.left, 0, svCanvas.width);
-    const y = clamp(event.clientY - bounds.top, 0, svCanvas.height);
+    const x = clamp(event.clientX - bounds.left, 0, svCanvas.offsetWidth);
+    const y = clamp(event.clientY - bounds.top, 0, svCanvas.offsetHeight);
 
-    const s = x / svCanvas.width;
-    const v = 1 - (y / svCanvas.height);
+    const s = x / svCanvas.offsetWidth;
+    const v = 1 - (y / svCanvas.offsetHeight);
 
-    tempSaturationBlocker = true;
+    // If v === $value then saturation would never update because the event is never fired that value has changed.
+    // A hack for a hack to improve performance!!
+    tempSaturationBlocker = v !== $value;
     saturation.set(s);
     value.set(v);
     tempSaturationBlocker = false;
@@ -124,7 +129,7 @@
   function onRGBPointerDown(event: PointerEvent): void {
     rgbPointerDown = true;
     onRGBPointerMove(event);
-    isDragging.addDragging();
+    isDraggingColor.addDragging();
   }
 
   function onRGBPointerMove(event: PointerEvent): void {
@@ -134,16 +139,16 @@
 
     const bounds = rgbCanvas.getBoundingClientRect();
     // Get y-pos within the canvas.
-    const y = clamp(event.clientY - bounds.top, 0, rgbCanvas.height);
+    const y = clamp(event.clientY - bounds.top, 0, rgbCanvas.offsetHeight);
     // Because the top is 360 degrees we want the top to be 360 degrees and bottom 0 degrees.
     // So 360 - value!
-    const h = 360 - Math.round(((y / rgbCanvas.height) * 360));
+    const h = 360 - Math.round(((y / rgbCanvas.offsetHeight) * 360));
     hue.set(h);
   }
 
   function getSVIndicatorTransform(saturation: number, value: number): string {
-    const x = (saturation * svCanvas.width) - svIndicator.offsetWidth * 0.5;
-    const y = ((1 - value) * svCanvas.height) - svIndicator.offsetHeight * 0.5;
+    const x = (saturation * svCanvas.offsetWidth) - svIndicator.offsetWidth * 0.5;
+    const y = ((1 - value) * svCanvas.offsetHeight) - svIndicator.offsetHeight * 0.5;
     const transform = `translate(${x}px, ${y}px)`;
     return transform;
   }
@@ -157,7 +162,7 @@ $rgb-margin-left: 8px;
 $rgb-indicator-outer-bg: #0d0d0d;
 $rgb-indicator-inner-bg: seashell;
 
-.color-picker {
+.nuu-color-picker {
   display: flex;
 }
 
@@ -220,13 +225,13 @@ $rgb-indicator-inner-bg: seashell;
 }
 
 </style>
-<div class="color-picker">
+<div class="nuu-color-picker">
     <div class="color-picker-sv-container">
       <div bind:this={svIndicator} class="color-picker-circle-indicator"><div class="color-picker-inner-circle"></div></div>
-      <canvas bind:this={svCanvas} on:pointerdown={onSVPointerDown} width="256" height="256" class="color-picker-saturation-lightness"></canvas>
+      <canvas bind:this={svCanvas} on:pointerdown={onSVPointerDown} width={svCanvasSize} height={svCanvasSize} class="color-picker-saturation-lightness"></canvas>
     </div>
     <div class="color-picker-rgb-container">
       <div bind:this={rgbPointyIndicator} class="color-picker-rgb-slider"><div class="color-picker-rgb-slider-inner"></div></div>
-      <canvas bind:this={rgbCanvas} on:pointerdown={onRGBPointerDown} class="color-picker-rgb" width="20" height="256"></canvas>
+      <canvas bind:this={rgbCanvas} on:pointerdown={onRGBPointerDown} class="color-picker-rgb" width={rgbCanvasWidth} height={svCanvasSize}></canvas>
     </div>
 </div>

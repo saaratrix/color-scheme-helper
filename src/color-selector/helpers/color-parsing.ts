@@ -1,6 +1,6 @@
-import type { ColorHSVA } from '../models/color-hsva';
+import type { ColorHSVA } from '../models/colors/color-hsva';
 import { hslToHSV, rgbToHSV, roundAlpha } from './color-space-helpers';
-import type { ColorRGBA } from '../models/color-rgba';
+import type { ColorRGBA } from '../models/colors/color-rgba';
 
 function parseAlpha(value: string): number {
   // Result[5] exists if the alpha channel existed otherwise parseFloat(undefined) == NaN.

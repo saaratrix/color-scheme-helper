@@ -1,14 +1,13 @@
 <script lang="ts">
-  import ColorPicker from "./ColorPicker.svelte";
-  import ColorInput from "./ColorInput.svelte";
+  import NuuColorPicker from "./NuuColorPicker.svelte";
+  import NuuColorInput from "./NuuColorInput.svelte";
   import NuuSelectedColor from "./NuuSelectedColor.svelte";
-  import { hue, saturation, value, alpha } from './selected-colors.store';
-  import type { ColorHSVA } from '../models/color-hsva';
+  import NuuColorConfirm from "./NuuColorConfirm.svelte";
+  import { hue, saturation, value, alpha } from './color-selector.store';
+  import type { ColorHSVA } from './models/colors/color-hsva';
   import { onMount } from 'svelte';
-  import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from '../helpers/color-parsing';
-  import { rgbToHSV, roundAlpha } from '../helpers/color-space-helpers';
-
-  let rootElement: HTMLElement;
+  import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from './helpers/color-parsing';
+  import { rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
 
   export let color: string = '';
   $: color, parseColor();
@@ -75,66 +74,54 @@
     oldHSVAColor.value = $value;
     oldHSVAColor.alpha = $alpha;
   }
+
+  function cancelPicking(): void {
+
+  }
 </script>
 <style lang="scss">
 
-  .color-selector {
+  .nuu-color-selector {
+    // It's inline so we don't cover 100% of the width.
     display: inline-flex;
-    padding: 8px;
+    flex-direction: column;
+    padding: 6px;
     border: 1px solid #bbb;
     border-radius: 4px;
     box-shadow: 5px 5px 25px 5px rgba(0,0,0,0.2);
   }
 
+  .color-selector-body {
+    display: flex;
+    flex-direction: column;
+  }
+
   .color-input-container {
-    display: grid;
-    grid-gap: 6px;
-    margin-left: 4px;
+    display: flex;
+    flex-direction: column;
+    // The RGB circle is otherwise on top of the inputs :D
+    margin-top: 16px;
   }
 
-  .color-selected-container {
+  .color-selector-footer {
     display: flex;
-    align-items: flex-end;
     justify-content: space-between;
-  }
-
-  .selected-color-container {
-    // This also removes whitespace which adds 4 pixels to the height.
-    display: flex;
-    border: 1px solid rgba(0, 0, 0, 0.67);
-  }
-
-  .color-confirm-button {
-    display: inline-block;
-    padding: 0 4px;
-    font-weight: bold;
-    font-size: 16pt;
-    color: green;
-    cursor: pointer;
-    user-select: none;
-
-    &:hover {
-      color: lime;
-    }
-
-    &:active {
-      color: #ac73bc;
-    }
+    margin-top: 4px;
   }
 </style>
 
-<div bind:this={rootElement} class="color-selector">
-  <div class="color-picker-container">
-    <ColorPicker />
-  </div>
-  <div class="color-input-container">
-    <ColorInput />
-    <div class="color-selected-container">
-      <div class="selected-color-container">
-        <NuuSelectedColor bind:oldHSVAColor="{oldHSVAColor}" />
-      </div>
-      <div class="color-confirm" on:click={selectColor}><span class="color-confirm-button" title="OK!">✓</span></div>
+<div class="nuu-color-selector">
+  <div class="color-selector-body">
+    <div class="color-picker-container">
+      <NuuColorPicker />
+    </div>
+    <div class="color-input-container">
+      <NuuColorInput />
     </div>
   </div>
+  <footer class="color-selector-footer">
+    <NuuSelectedColor bind:oldHSVAColor="{oldHSVAColor}" />
+    <NuuColorConfirm on:ok={selectColor} on:cancel={cancelPicking} />
+  </footer>
 </div>
 

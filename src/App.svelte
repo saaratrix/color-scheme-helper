@@ -1,10 +1,10 @@
 <script lang="ts">
-	import ColorSelector from './color-selector/ColorSelector.svelte';
-  import { isDragging } from './global-states.store';
-  import type { ColorHSVA } from './models/color-hsva';
-  import { hsvaToCSS, hsvToRGB, hsvToRGBAToCSS, rgbaToCSS, rgbaToHex } from './helpers/color-space-helpers';
+	import ColorSelector from './color-selector/NuuColorSelector.svelte';
+  import { isDraggingColor } from './color-selector/color-selector.store';
+  import type { ColorHSVA } from './color-selector/models/colors/color-hsva';
+  import { hsvaToCSS, hsvToRGB, hsvToRGBAToCSS, rgbaToCSS, rgbaToHex } from './color-selector/helpers/color-space-helpers';
 
-  isDragging.subscribe((value) => {
+  isDraggingColor.subscribe((value) => {
     if (value) {
       document.body.classList.add('user-select-none');
     } else {

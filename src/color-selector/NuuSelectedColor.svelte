@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { hsvaToCSS } from '../helpers/color-space-helpers';
+  import { hsvaToCSS } from './helpers/color-space-helpers';
   import { onDestroy, onMount } from 'svelte';
-  import { hue, saturation, value, alpha } from './selected-colors.store';
-  import type { ColorHSVA } from '../models/color-hsva';
+  import { hue, saturation, value, alpha } from './color-selector.store';
+  import type { ColorHSVA } from './models/colors/color-hsva';
   import type { Unsubscriber } from 'svelte/store';
-  import { drawAlphaBackground } from './color-picker-helpers';
+  import { drawAlphaBackground } from './helpers/color-picker-helpers';
 
   export let oldHSVAColor: ColorHSVA;
   // If oldHSVAColor changes then we want to draw new color! This can be changed if a user confirms their colour selection.
@@ -78,6 +78,17 @@
   $selected-color-height: 32px;
   $selected-color-width: 44px;
 
+  .nuu-selected-color {
+    // This also removes whitespace which adds 4 pixels to the height.
+    display: inline-flex;
+  }
+
+  .selected-color-inner-container {
+    display: inline-flex;
+    border: 1px solid rgba(0, 0, 0, 0.67);
+    height: $selected-color-height + 2px;
+  }
+
   .selected-color {
     display: inline-block;
     width: $selected-color-width;
@@ -88,6 +99,10 @@
     cursor: pointer;
   }
 </style>
+<div class="nuu-selected-color">
+  <div class="selected-color-inner-container">
+    <div class="selected-color selected-color-new"><canvas bind:this={newCanvas} width={canvasWidth} height={canvasHeight}></canvas></div>
+    <div class="selected-color selected-color-old" on:click={resetColor}><canvas bind:this={oldCanvas} width={canvasWidth} height={canvasHeight}></canvas></div>
+  </div>
+</div>
 
-<div class="selected-color selected-color-new"><canvas bind:this={newCanvas} width={canvasWidth} height={canvasHeight}></canvas></div>
-<div class="selected-color selected-color-old" on:click={resetColor}><canvas bind:this={oldCanvas} width={canvasWidth} height={canvasHeight}></canvas></div>

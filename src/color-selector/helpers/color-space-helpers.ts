@@ -1,7 +1,7 @@
-import type { ColorRGB } from '../models/color-rgb';
-import type { ColorHSL } from '../models/color-hsl';
-import type { ColorHSV } from '../models/color-hsv';
-import type { ColorRGBA } from '../models/color-rgba';
+import type { ColorRGB } from '../models/colors/color-rgb';
+import type { ColorHSL } from '../models/colors/color-hsl';
+import type { ColorHSV } from '../models/colors/color-hsv';
+import type { ColorRGBA } from '../models/colors/color-rgba';
 
 
 /**
