@@ -205,16 +205,12 @@
   }
 
   .number-group {
-    //width: $label-length + $input-length;
-
     input {
       width: $input-length;
     }
   }
 
   .hex-group {
-    //width: $label-length + $input-hex-length;
-
     input {
       width: $input-hex-length;
     }
