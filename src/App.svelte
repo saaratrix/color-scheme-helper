@@ -1,8 +1,16 @@
 <script lang="ts">
-	import ColorSelector from './color-selector/NuuColorSelector.svelte';
+  import ColorSelector from './color-selector/NuuColorSelector.svelte';
   import { isDraggingColor } from './color-selector/color-selector.store';
   import type { ColorHSVA } from './color-selector/models/colors/color-hsva';
-  import { hsvaToCSS, hsvToRGB, hsvToRGBAToCSS, rgbaToCSS, rgbaToHex } from './color-selector/helpers/color-space-helpers';
+  import {
+    hsvaToCSS,
+    hsvToRGB,
+    hsvaToRGBAToCSS,
+    rgbaToCSS,
+    rgbaToHex
+  } from './color-selector/helpers/color-space-helpers';
+  import SelectedColors from "./selected-colors/SelectedColors.svelte";
+  import type { SelectedColorsColorChangedEvent } from './selected-colors/selected-colors-events';
 
   isDraggingColor.subscribe((value) => {
     if (value) {
@@ -12,20 +20,23 @@
     }
   });
 
-  let colorHSVA: ColorHSVA = {
-    hue: Math.round(Math.random() * 360),
-    saturation: Math.random(),
-    value: Math.random(),
-    alpha: 1,
-  };
-  let color: string = hsvaToCSS(colorHSVA.hue, colorHSVA.saturation, colorHSVA.value, colorHSVA.alpha);
+  let currentColor: string = '';
+  function onColorChanged(event: CustomEvent<SelectedColorsColorChangedEvent>): void {
+    console.log('color changed', event.detail.color);
+    currentColor = event.detail.color;
+  }
 </script>
 <style>
 
 </style>
 
 <main>
-	<ColorSelector bind:color={color} />
+  <div class="color-picker-wrapper">
+    <ColorSelector bind:color={currentColor} />
+  </div>
+  <div>
+    <SelectedColors on:colorChanged={onColorChanged}></SelectedColors>
+  </div>
 </main>
 
 
