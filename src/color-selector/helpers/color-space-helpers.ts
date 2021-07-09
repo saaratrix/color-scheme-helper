@@ -215,7 +215,8 @@ export function hsvToHSL(hue: number, saturation: number, value: number): ColorH
   const lightness = value * (1 - saturation / 2);
   // sv = 0 if value == 0
   let sl = 0;
-  if (value !== 0) {
+  // Division by 0 when lightness == 0 or 1
+  if (lightness !== 0 && lightness !== 1) {
     sl = (value - lightness) / Math.min(lightness, 1 - lightness);
   }
 

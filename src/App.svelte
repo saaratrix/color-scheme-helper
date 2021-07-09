@@ -1,16 +1,9 @@
 <script lang="ts">
   import ColorSelector from './color-selector/NuuColorSelector.svelte';
   import { isDraggingColor } from './color-selector/color-selector.store';
-  import type { ColorHSVA } from './color-selector/models/colors/color-hsva';
-  import {
-    hsvaToCSS,
-    hsvToRGB,
-    hsvaToRGBAToCSS,
-    rgbaToCSS,
-    rgbaToHex
-  } from './color-selector/helpers/color-space-helpers';
-  import SelectedColors from "./selected-colors/SelectedColors.svelte";
-  import type { SelectedColorsColorChangedEvent } from './selected-colors/selected-colors-events';
+  import type { ColorSwatchColorChangedEvent } from './color-swatch/color-swatch-events';
+  import ColorSwatch from "./color-swatch/ColorSwatch.svelte";
+  import type { NuuColorSelectorEvents } from './color-selector/models/events/nuu-color-selector-events';
 
   isDraggingColor.subscribe((value) => {
     if (value) {
@@ -21,21 +14,29 @@
   });
 
   let currentColor: string = '';
-  function onColorChanged(event: CustomEvent<SelectedColorsColorChangedEvent>): void {
+  let pickedColor: string = '';
+
+  function onColorPicked(event: CustomEvent<NuuColorSelectorEvents>): void {
+    pickedColor = event.detail as string;
+  }
+
+  function onColorChanged(event: CustomEvent<ColorSwatchColorChangedEvent>): void {
     console.log('color changed', event.detail.color);
     currentColor = event.detail.color;
   }
 </script>
 <style>
-
+.color-swatch-wrapper {
+  margin-top: 12px;
+}
 </style>
 
 <main>
   <div class="color-picker-wrapper">
-    <ColorSelector bind:color={currentColor} />
+    <ColorSelector bind:color={currentColor} on:colorPicked={onColorPicked} />
   </div>
-  <div>
-    <SelectedColors on:colorChanged={onColorChanged}></SelectedColors>
+  <div class="color-swatch-wrapper">
+    <ColorSwatch on:colorChanged={onColorChanged} bind:pickedColor={pickedColor}></ColorSwatch>
   </div>
 </main>
 

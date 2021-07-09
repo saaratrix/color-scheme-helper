@@ -6,7 +6,11 @@
   import { hue, saturation, value, alpha } from './color-selector.store';
   import type { ColorHSVA } from './models/colors/color-hsva';
   import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from './helpers/color-parsing';
-  import { rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
+  import { hsvToRGB, rgbaToHex, rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
+  import { createEventDispatcher } from 'svelte';
+  import type { NuuColorSelectorEvents } from './models/events/nuu-color-selector-events';
+
+  const dispatch = createEventDispatcher<NuuColorSelectorEvents>();
 
   let oldHSVAColor: ColorHSVA = createDefaultHSVColor();
   export let color: string = '';
@@ -71,6 +75,11 @@
     oldHSVAColor.saturation = $saturation;
     oldHSVAColor.value = $value;
     oldHSVAColor.alpha = $alpha;
+
+    const rgb = hsvToRGB($hue, $saturation, $value);
+    const hex = rgbaToHex(rgb.red, rgb.green, rgb.blue, $alpha, true);
+
+    dispatch('colorPicked', hex);
   }
 
   function cancelPicking(): void {
