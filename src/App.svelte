@@ -21,7 +21,6 @@
   }
 
   function onColorChanged(event: CustomEvent<ColorSwatchColorChangedEvent>): void {
-    console.log('color changed', event.detail.color);
     currentColor = event.detail.color;
   }
 </script>

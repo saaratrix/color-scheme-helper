@@ -75,13 +75,14 @@ export function rgbToHex(red: number, green: number, blue: number): string {
  * @param blue Range: [0, 255]
  * @param green Range: [0, 255]
  * @param alpha Range: [0, 1]
+ * @param truncateFullAlpha If true then the alpha part will be removed if alpha === 255 (ff) so it's just #123456 instead of #123456ff.
  */
-export function rgbaToHex(red: number, green: number, blue: number, alpha: number, truncateWhenFullAlpha: boolean): string {
+export function rgbaToHex(red: number, green: number, blue: number, alpha: number, truncateFullAlpha: boolean): string {
   // We floor the alpha rounding so that if it's 0.99 it's still 245.
   alpha = Math.floor(alpha * 255);
 
   let hex = rgbToHex(red, green, blue);
-  if (!truncateWhenFullAlpha || alpha !== 255) {
+  if (!truncateFullAlpha || alpha !== 255) {
     const alphaHex = componentToHex(alpha);
     hex += alphaHex;
   }
