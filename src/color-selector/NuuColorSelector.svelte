@@ -5,26 +5,23 @@
   import NuuColorConfirm from "./NuuColorConfirm.svelte";
   import { hue, saturation, value, alpha } from './color-selector.store';
   import type { ColorHSVA } from './models/colors/color-hsva';
-  import { onMount } from 'svelte';
   import { parseHexToRGBA, parseHSLFromCSS, parseRGBFromCSS } from './helpers/color-parsing';
-  import { rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
+  import { hsvToRGB, rgbaToHex, rgbToHSV, roundAlpha } from './helpers/color-space-helpers';
+  import { createEventDispatcher } from 'svelte';
+  import type { NuuColorSelectorEvents } from './models/events/nuu-color-selector-events';
 
+  const dispatch = createEventDispatcher<NuuColorSelectorEvents>();
+
+  let oldHSVAColor: ColorHSVA = createDefaultHSVColor();
   export let color: string = '';
   $: color, parseColor();
-
-  // Give default value or it'll crash when mounting components.
-  let oldHSVAColor: ColorHSVA = createDefaultHSVColor();
-
-  onMount(() => {
-    parseColor();
-  });
 
   function parseColor(): void {
     let parsedColor: ColorHSVA = createDefaultHSVColor();
     // For example `color` would make the value be true and then color.startsWith would fail.
     if (!color || !color.startsWith) {
       console.log('nuu color picker: could not parse input color.');
-      oldHSVAColor = parsedColor
+      oldHSVAColor = parsedColor;
       return;
     }
 
@@ -45,7 +42,12 @@
     hue.set(parsedColor.hue);
     saturation.set(parsedColor.saturation);
     value.set(parsedColor.value);
-    oldHSVAColor = parsedColor;
+
+    // Without setTimeout the old color isn't updating and instead it gets 360, 1, 1 as the values.
+    // I'm guessing that is because of some user error, or Svelte event gone wrong! But probably user error.
+    setTimeout(() => {
+      oldHSVAColor = parsedColor;
+    });
   }
 
   function parseHex(color: string, targetColor: ColorHSVA): void {
@@ -73,6 +75,11 @@
     oldHSVAColor.saturation = $saturation;
     oldHSVAColor.value = $value;
     oldHSVAColor.alpha = $alpha;
+
+    const rgb = hsvToRGB($hue, $saturation, $value);
+    const hex = rgbaToHex(rgb.red, rgb.green, rgb.blue, $alpha, true);
+
+    dispatch('colorPicked', hex);
   }
 
   function cancelPicking(): void {

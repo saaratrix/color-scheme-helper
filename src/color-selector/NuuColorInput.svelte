@@ -145,11 +145,7 @@
    * @param a Range: [0, 1]
    */
   function updateHex(red: number, green: number, blue: number, a: number): void {
-    if (a === 1) {
-      hex = rgbToHex(red, green, blue);
-    } else {
-      hex = rgbaToHex(red, green, blue, a);
-    }
+    hex = rgbaToHex(red, green, blue, a, true);
   }
 
   function getAndSetRoundedInputValue(event: InputEvent): number {

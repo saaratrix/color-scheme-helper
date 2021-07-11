@@ -10,7 +10,7 @@
   // If oldHSVAColor changes then we want to draw new color! This can be changed if a user confirms their colour selection.
   $: if (oldHSVAColor) { drawColor(oldContext, oldHSVAColor.hue, oldHSVAColor.saturation, oldHSVAColor.value, oldHSVAColor.alpha); };
 
-  const canvasWidth = 44;
+  const canvasWidth = 32;
   const canvasHeight = 32;
 
   let newCanvas: HTMLCanvasElement | undefined;
@@ -76,7 +76,7 @@
 </script>
 <style lang="scss">
   $selected-color-height: 32px;
-  $selected-color-width: 44px;
+  $selected-color-width: 32px;
 
   .nuu-selected-color {
     // This also removes whitespace which adds 4 pixels to the height.

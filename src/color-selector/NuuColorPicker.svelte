@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { drawRGBStrip, drawHSVBlock, createHSVGradients } from './helpers/color-picker-helpers';
-  import { hsvToRGBAToCSS } from './helpers/color-space-helpers';
+  import { hsvaToRGBAToCSS } from './helpers/color-space-helpers';
 
   import { hue, saturation, value, isDraggingColor } from './color-selector.store';
   import type { Unsubscriber } from 'svelte/store';
@@ -35,11 +35,11 @@
     svGradients = createHSVGradients(svCanvas.width, svCanvas.height, svContext);
 
     drawRGBStrip(rgbCanvas);
-    drawHSVBlock(hsvToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext, svGradients);
+    drawHSVBlock(hsvaToRGBAToCSS($hue, 1, 1, 1), svCanvas, svContext, svGradients);
 
     subscriptions.push(
       hue.subscribe(h => {
-        const rgba = hsvToRGBAToCSS(h, 1, 1, 1);
+        const rgba = hsvaToRGBAToCSS(h, 1, 1, 1);
         drawHSVBlock(rgba, svCanvas, svContext, svGradients);
         const rgbIndicatorTop = (((360 - h) / 360) * rgbCanvas.offsetHeight);
         rgbPointyIndicator.style.transform = `translate(-0.5px, ${rgbIndicatorTop}px)`;
