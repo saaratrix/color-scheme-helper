@@ -17,7 +17,7 @@
     initColors();
     dispatchColorChanged();
 
-    const degreesPerSecond = 360 / 30;
+    const degreesPerSecond = 360 / 60;
     // The lazy way of doing a elapsed = now - lastFrame.
     const elapsedTime = 1 / 60;
     degreesTimeout = window.setInterval(() => {
@@ -47,7 +47,7 @@
 
     for (let i = 0; i < totalColors - 1; i++) {
       // Add a lot of white colours!
-      result.push("#ffffff");
+      result.push("");
     }
 
     colors = result;
@@ -58,7 +58,11 @@
     const index = parseInt(target.dataset['index'], 10);
     currentIndex = index;
 
-    dispatchColorChanged();
+    // Only dispatch the event if we have an actual color.
+    // This is to that the colors can be empty slots and you can change to them without affecting the "current color" in the picker.
+    if (colors[currentIndex]) {
+      dispatchColorChanged();
+    }
   }
 
   function dispatchColorChanged(): void {
@@ -71,14 +75,18 @@
   function updateCurrentColor(): void {
     const currentColor = colors[currentIndex];
     // This can happen while components are initializing.
-    if (!currentColor) {
+    if (typeof currentColor === 'undefined') {
       return;
     }
 
     colors[currentIndex] = pickedColor;
+    // Reset the picked color so it can be set the same value since Svelte doesn't like to emit same event.
+    pickedColor = "";
   }
 </script>
 <style lang="scss">
+  $hover-rgb-strength: 192;
+  $active-rgb-strength: 255;
 
   .color-swatch {
     display: grid;
@@ -93,17 +101,21 @@
     border-width: 2px;
     border-style: solid;
     border-image-slice: 1;
-    // Super flashy rainbow border!
-    //border-image-source: linear-gradient(var(--degrees), rgb(255, 0, 0) 0%, rgb(255, 0, 255) 16.67%, rgb(0, 0, 255) 33.33%, rgb(0, 255, 255) 50%, rgb(0, 255, 0) 66.67%, rgb(255, 255, 0) 83.33%, rgb(255, 0, 0) 100%);
-    border-image-source: linear-gradient(var(--degrees), #badbad, #6c18f4);
+
+    border-image-source: linear-gradient(var(--degrees), #badbad, #88308e);
     cursor: pointer;
 
     &:not(.active):hover {
-      border-image-source: linear-gradient(var(--degrees), #ed9fe1, #9ce8dc);
+      border-image-source: linear-gradient(var(--degrees), rgb($hover-rgb-strength, 0, 0) 0%, rgb($hover-rgb-strength, 0, $hover-rgb-strength) 16.67%, rgb(0, 0, $hover-rgb-strength) 33.33%, rgb(0, $hover-rgb-strength, $hover-rgb-strength) 50%, rgb(0, $hover-rgb-strength, 0) 66.67%, rgb($hover-rgb-strength, $hover-rgb-strength, 0) 83.33%, rgb($hover-rgb-strength, 0, 0) 100%);
+    }
+
+    &:not(.active):active {
+      border-image-source: linear-gradient(var(--degrees), rgb($active-rgb-strength, 0, 0) 0%, rgb($active-rgb-strength, 0, $active-rgb-strength) 16.67%, rgb(0, 0, $active-rgb-strength) 33.33%, rgb(0, $active-rgb-strength, $active-rgb-strength) 50%, rgb(0, $active-rgb-strength, 0) 66.67%, rgb($active-rgb-strength, $active-rgb-strength, 0) 83.33%, rgb($active-rgb-strength, 0, 0) 100%);
     }
   }
 
   .active {
+    // Super flashy rainbow border!
     border-image-source: linear-gradient(var(--degrees), rgb(255, 0, 0) 0%, rgb(255, 0, 255) 16.67%, rgb(0, 0, 255) 33.33%, rgb(0, 255, 255) 50%, rgb(0, 255, 0) 66.67%, rgb(255, 255, 0) 83.33%, rgb(255, 0, 0) 100%);
   }
 
