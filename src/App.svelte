@@ -4,6 +4,7 @@
   import type { ColorSwatchColorChangedEvent } from './color-swatch/color-swatch-events';
   import ColorSwatch from "./color-swatch/ColorSwatch.svelte";
   import type { NuuColorSelectorEvents } from './color-selector/models/events/nuu-color-selector-events';
+  import ColorThemer from "./complementary-colours/ColorThemer.svelte";
 
   isDraggingColor.subscribe((value) => {
     if (value) {
@@ -35,7 +36,10 @@
     <ColorSelector bind:color={currentColor} on:colorPicked={onColorPicked} />
   </div>
   <div class="color-swatch-wrapper">
-    <ColorSwatch on:colorChanged={onColorChanged} bind:pickedColor={pickedColor}></ColorSwatch>
+    <ColorSwatch on:colorChanged={onColorChanged} bind:pickedColor={pickedColor} />
+  </div>
+  <div class="related-colours-wrapper">
+    <ColorThemer />
   </div>
 </main>
 

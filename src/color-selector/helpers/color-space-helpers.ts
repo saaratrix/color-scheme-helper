@@ -78,7 +78,7 @@ export function rgbToHex(red: number, green: number, blue: number): string {
  * @param truncateFullAlpha If true then the alpha part will be removed if alpha === 255 (ff) so it's just #123456 instead of #123456ff.
  */
 export function rgbaToHex(red: number, green: number, blue: number, alpha: number, truncateFullAlpha: boolean): string {
-  // We floor the alpha rounding so that if it's 0.99 it's still 245.
+  // We floor the alpha rounding so that if it's 0.99 it's still 254.
   alpha = Math.floor(alpha * 255);
 
   let hex = rgbToHex(red, green, blue);

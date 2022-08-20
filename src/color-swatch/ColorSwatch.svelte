@@ -80,7 +80,7 @@
     }
 
     colors[currentIndex] = pickedColor;
-    // Reset the picked color so it can be set the same value since Svelte doesn't like to emit same event.
+    // Reset the picked color, so it can be set the same value since Svelte doesn't like to emit same event.
     pickedColor = "";
   }
 </script>
